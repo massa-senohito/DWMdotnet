@@ -14,24 +14,29 @@ static const unsigned int textmargin  = 5;        /* margin for the text display
 static bool showbar                   = true;     /* false means no bar */
 static bool topbar                    = true;     /* false means bottom bar */
 
+#define MAXTAGLEN               16
 /* tagging */
 static const char tags[][MAXTAGLEN] = { "1", "2", "3", "4", "5", "6", "7", "8", "9" };
 static unsigned int tagset[] = {1, 1}; /* after start, first tag is selected */
 
+#ifdef Rules
 static Rule rules[] = {
 	/* class                   title                      tags mask     isfloating */
 	{ "MozillaUIWindowClass",  "- Mozilla Firefox",       1 << 8,       false },
 };
+#endif
 
 /* layout(s) */
 static float mfact      = 0.55; /* factor of master area size [0.05..0.95] */
 
+#ifdef layouts
 static Layout layouts[] = {
 	/* symbol     arrange function */
 	{ "[]=",      tile },    /* first entry is default */
 	{ "><>",      nullptr },    /* no layout function means floating behavior */
 	{ "[M]",      monocle },
 };
+#endif
 
 /* key definitions */
 #define MODKEY 		(MOD_CONTROL | MOD_ALT)

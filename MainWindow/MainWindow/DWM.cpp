@@ -1,3 +1,5 @@
+#include "stdafx.h"
+//#define ManageS
 #ifdef ManageS
 /* See LICENSE file for copyright and license details.
 *
@@ -16,9 +18,6 @@
 
 #define WIN32_LEAN_AND_MEAN
 #define _WIN32_WINNT			0x0500
-
-#include "stdafx.h"
-
 
 #define NAME					"dwm-win32" 	/* Used for window name/class */
 

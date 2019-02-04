@@ -56,6 +56,13 @@ type Key =
 //	void (*arrange)(void);
 //} Layout;
 
+type Layout =
+  {
+    Symbol:string 
+    Arrange : unit->unit
+  }
+let nullLayouts = {Symbol = "" ; Arrange = fun ()->() }
+
 type Rule =
   {
     Class:string;

@@ -7,8 +7,8 @@
     <ProjectGuid>{F29151B9-32AC-4F79-9421-9711A4D2B1BF}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>WinApi</RootNamespace>
-    <AssemblyName>WinApi</AssemblyName>
+    <RootNamespace>MasWinApi</RootNamespace>
+    <AssemblyName>MasWinApi</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>

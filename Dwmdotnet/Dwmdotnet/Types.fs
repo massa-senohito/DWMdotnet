@@ -29,18 +29,20 @@ type Client =
     Parent:IntPtr
     Root:IntPtr
     ThreadId:int
-    Rect:System.Drawing.Rectangle
+    mutable Rect:System.Drawing.Rectangle
     Bw:int// XXX: useless?
-    Tags:int
-    IsMinimized:bool
-    IsFloating:bool
+    //mutable Tags:int
+    //IsMinimized:bool
+    //mutable IsFloating:bool
     IsActive:bool
-    Ignore:bool
-    Border:bool
-    Wasvisible:bool
-    IsFixed:bool;    Isurgent:bool;    // XXX: useless?
-    Next:Client
-    Snext:Client
+    //mutable Ignore:bool
+    //Border:bool
+    //mutable Wasvisible:bool
+    //IsFixed:bool;
+    //Isurgent:bool;    // XXX: useless?
+    //Next:Client
+    //mutable Snext:Client
+    Title:string
   }
 
 type Key =

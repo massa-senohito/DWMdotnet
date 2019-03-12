@@ -146,8 +146,9 @@ namespace Handles
         public static extern bool SystemParametersInfoGet(
             uint action , uint param , ref RECT vparam , uint init );
 
+
         [DllImport( "User32.dll" )]
-        public static extern int SetForegroundWindow(
+        static extern int SetForegroundWindow(
               IntPtr hWnd
               );
 
@@ -206,6 +207,9 @@ namespace Handles
 
         [DllImport( "gdi32.dll" )]
         public static extern IntPtr CreatePen( PenStyle fnPenStyle , int nWidth , uint crColor );
+
+        [DllImport("gdi32.dll")]
+        public static extern uint SetTextColor(IntPtr hdc, int crColor);
 
         [DllImport( "user32.dll" , CharSet = CharSet.Auto )]
         public static extern int DrawText( IntPtr hDC , string lpString , int nCount , [In, Out] ref RECT lpRect , DT uFormat );
@@ -329,10 +333,9 @@ public static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int 
         static extern bool GetTextExtentPoint32( IntPtr hdc , string lpString ,
            int cbString , out Size lpSize );
 
-        public static int GetTextExtentWidth( IntPtr hdc , string lpString )
+        public static int GetTextExtentWidth( IntPtr hdc , string lpString , int cbString )
         {
             Size size = new Size( );
-            int cbString = lpString.Length;
             GetTextExtentPoint32( hdc , lpString , cbString , out size );
             return size.Width;
         }
@@ -353,7 +356,7 @@ public static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int 
             return GetWindowThreadProcessId( hWnd , out ret );
         }
 
-        public static StringBuilder GetWindowText( IntPtr hWnd )
+        public static String GetWindowText( IntPtr hWnd )
         {
             //ウィンドウのタイトルの長さを取得する
             int textLen = GetWindowTextLength( hWnd );
@@ -363,9 +366,9 @@ public static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int 
                 StringBuilder tsb = new StringBuilder( textLen + 1 );
                 GetWindowText( hWnd , tsb , tsb.Capacity );
 
-                return tsb;
+                return tsb.ToString();
             }
-            return null;
+            return "";
         }
         public static StringBuilder GetClassText( IntPtr hWnd )
         {
@@ -451,18 +454,52 @@ public static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int 
         public int Top;
         public int Right;
         public int Bottom;
+
         public int Width
         {
             get
             {
                 return Right - Left;
             }
+            set
+            {
+                Right = Left + value;
+            }
         }
+
         public int Height
         {
             get
             {
                 return Bottom - Top;
+            }
+            set
+            {
+                Bottom = Top + value;
+            }
+        }
+
+        public RECT( int left , int top , int width , int height )
+        {
+            Left = left;
+            Top  = top;
+            Right = left + width;
+            Bottom = top + height;
+        }
+
+        public RECT( RECT rect )
+        {
+            Left = rect.Left;
+            Top  = rect.Top;
+            Right = rect.Right;
+            Bottom = rect.Bottom;
+        }
+
+        public Rectangle Rect
+        {
+            get
+            {
+                return new Rectangle( Left , Top , Width , Height );
             }
         }
     }

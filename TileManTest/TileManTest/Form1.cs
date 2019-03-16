@@ -4,7 +4,7 @@ using MouseCaptureTest;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-//using System.Drawing;
+using System.Linq;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
@@ -33,7 +33,11 @@ namespace TileManTest
 
         List<string> TagList = new List<string>( )
         {
-            "1"
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
         };
         MultiDictionary<string , Client> TagClientDic = new MultiDictionary<string , Client>( );
 
@@ -51,7 +55,9 @@ namespace TileManTest
             clientList.Add( client );
             clientList.Reverse( );
         }
+
         bool Initialized;
+
         public Form1()
         {
             MessageBox.Show( "hoge" );
@@ -72,16 +78,19 @@ namespace TileManTest
             catch ( Exception ex )
             {
                 MessageBox.Show( ex.ToString() );
-                foreach ( var wnd in DWM.allClient( ) )
+                foreach ( var wnd in TagClientDic.Values )
                 {
-                    User32Methods.MoveWindow( wnd.Hwnd , 0 , 0 , 640 , 480 , true );
+                    foreach ( var item in wnd )
+                    {
+                        User32Methods.MoveWindow( item.Hwnd , 0 , 0 , 640 , 480 , true );
+                    }
                 }
             }
         }
 
         void DrawBar()
         {
-            RECT barRect = new RECT( 0 , 0 , 0 , BarHeight );
+            RECT barRect = new RECT( 0 , 0 , ScreenGeom.Width , BarHeight );
             for ( int i = 0 ; i < TagList.Count ; i++ )
             {
                 var item = TagList[ i ];
@@ -155,8 +164,20 @@ namespace TileManTest
 
         void ApplyRules( Types.Client client )
         {
-            var tag = TagList[ SelectedTag ];
-            TagClientDic.Add( tag , client );
+        }
+
+        void ButtonPress()
+        {
+            var point = MousePosition;
+            int x = 0;
+            for ( int i = 0 ; i < TagList.Count ; i++ )
+            {
+                int nextX = x + DWM.textnw( Handle , TagList[ i ] );
+                if ( x < point.X && point.X < nextX )
+                {
+
+                }
+            }
         }
 
         void SetSelected( Client client )
@@ -167,20 +188,40 @@ namespace TileManTest
 
         protected override void WndProc( ref System.Windows.Forms.Message m )
         {
-            //base.WndProc( ref m );
+            // DrawBar
+            base.WndProc( ref m );
             //return;
-            var code = (WM)m.Msg;
+            var code = ( WM )m.Msg;
             var wParam = m.WParam;
-            if ( code == WM.CREATE )
+            #region barhandler
+            switch ( code )
             {
+                case WM.CREATE:
 
+                    UpdateBar( );
+
+                    break;
+                case WM.PAINT:
+
+                    PaintStruct paintStruct;
+                    User32Methods.BeginPaint( m.HWnd , out paintStruct );
+                    DrawBar( );
+                    User32Methods.EndPaint( m.HWnd , ref paintStruct );
+
+                    break;
+                case WM.LBUTTONDOWN:
+                    ButtonPress( );
+                    break;
+
+                default:
+                    break;
             }
-            else if ( code == WM.CLOSE )
+            #endregion
+            if ( code == WM.CLOSE )
             {
             }
             else if ( code == WM.DESTROY )
             {
-
             }
             else if ( code == WM.HOTKEY )
             {
@@ -193,27 +234,7 @@ namespace TileManTest
 
                     var param = ( WM )( wParam );
                     var client = GetClient( m.LParam );
-                    switch ( param )
-                    {
-                        case WM.HSHELL_WINDOWCREATED:
-                            if ( IsManageable( m.LParam ) )
-                            {
-                                var newClient = Manage( m.LParam );
-                                // とりあえず子ウィンドウはスルー
-                            }
-                            Trace.WriteLine( "created :" + ThreadWindowHandles.GetWindowText( m.LParam ) );
-
-                            break;
-                        case WM.HSHELL_WINDOWDESTROYED:
-                            Trace.WriteLine( "destroyed : " + ThreadWindowHandles.GetWindowText( m.LParam ) );
-                            break;
-                        case WM.HSHELL_WINDOWACTIVATED:
-                        case WM.HSHELL_RUDEAPPACTIVATED:
-                            Trace.WriteLine( "active : " + ThreadWindowHandles.GetWindowText( m.LParam ) );
-                            break;
-                        default:
-                            break;
-                    }
+                    OtherWindow( m , param , client );
 
                 }
 
@@ -221,6 +242,43 @@ namespace TileManTest
 
                 //if(code != 0 && wParam != IntPtr.Zero)
                 //Trace.WriteLine( $"code : {code} wParam : {wParam}" );
+        }
+
+        private void OtherWindow( System.Windows.Forms.Message m , WM param , Client client )
+        {
+            switch ( param )
+            {
+                case WM.HSHELL_WINDOWCREATED:
+                    if ( IsManageable( m.LParam ) )
+                    {
+                        var newClient = Manage( m.LParam );
+                        // とりあえず子ウィンドウはスルー
+                        Tile( );
+                    }
+                    Trace.WriteLine( "created :" + ThreadWindowHandles.GetWindowText( m.LParam ) );
+
+                    break;
+                case WM.HSHELL_WINDOWDESTROYED:
+                    if ( client != null )
+                    {
+
+                        Trace.WriteLine( "destroyed : " + ThreadWindowHandles.GetWindowText( m.LParam ) );
+                        Unmanage( client );
+                        Tile( );
+                    }
+                    break;
+                case WM.HSHELL_WINDOWACTIVATED:
+                case WM.HSHELL_RUDEAPPACTIVATED:
+                    if ( client != null )
+                    {
+
+                        Trace.WriteLine( "active : " + ThreadWindowHandles.GetWindowText( m.LParam ) );
+                    }
+                    break;
+                default:
+                    break;
+            }
+
         }
 
         void UpdateGeom()
@@ -267,7 +325,7 @@ namespace TileManTest
             var wnd = Win32dll.WindowFromPoint( MousePosition.X , MousePosition.Y );
             uint procID = 0;
             label2.Text = wnd.ToString();
-
+            label1.Text = SelectedClientList( ).Aggregate( "" , ( acc , c ) => acc + "\n" + c.Title );
             Win32dll.GetWindowThreadProcessId( wnd ,out procID);
             wnd = Win32dll.OpenProcess( Win32dll.ProcessAccessFlags.QueryInformation | Win32dll.ProcessAccessFlags.VMRead | Win32dll.ProcessAccessFlags.Terminate , false , procID );
             label3.Text = wnd.ToString();
@@ -293,7 +351,15 @@ namespace TileManTest
 
         Client GetClient( IntPtr hwnd )
         {
-            return DWM.allClient( ).First( c => c.Hwnd == hwnd );
+            foreach ( var item in TagClientDic.Values )
+            {
+                var foundItem = item.FirstOrDefault( c => c.Hwnd == hwnd );
+                if ( foundItem != null )
+                {
+                    return foundItem;
+                }
+            }
+            return null;
         }
 
         Client Manage( IntPtr hwnd )
@@ -304,7 +370,7 @@ namespace TileManTest
             //    //Trace.WriteLine( value );
             //}
 
-            if ( DWM.containClient( hwnd ) )
+            if ( ContainClient( hwnd ) )
             {
                 return GetClient( hwnd );
             }
@@ -330,8 +396,14 @@ namespace TileManTest
                 DWM.resize( client , windowRect.Left , windowRect.Top , windowRect.Width , windowRect.Height , WindowGeom.Rect );
             }
 
-            DWM.attach( client );
+            Attach( client );
             return client;
+        }
+
+        private void Attach( Client client )
+        {
+            var tag = TagList[ SelectedTag ];
+            TagClientDic.Add( tag , client );
         }
 
         bool Scan( IntPtr hwnd , IntPtr lParam )
@@ -373,11 +445,15 @@ namespace TileManTest
 
         bool IsManageable( IntPtr hwnd )
         {
-            if ( DWM.containClient(hwnd) )
+            if ( ContainClient(hwnd) )
             {
-                return true;
+                return false;
             }
             String value = ThreadWindowHandles.GetWindowText( hwnd );
+            if ( value.Contains( "Visual" ) )
+            {
+                return false;
+            }
             var parent = ThreadWindowHandles.GetParent( hwnd );
             var owner  = User32Helpers.GetWindow( hwnd , GetWindowFlag.GW_OWNER );
             var style   = (WindowStyles)User32Helpers.GetWindowLongPtr( hwnd , WindowLongFlags.GWL_STYLE ).ToInt32();
@@ -386,7 +462,7 @@ namespace TileManTest
             bool isParentOK = parent != IntPtr.Zero && IsManageable( parent );
             bool isTool = ( exStyle & WindowExStyles.WS_EX_TOOLWINDOW ) != 0;
             bool isApp  = ( exStyle & WindowExStyles.WS_EX_APPWINDOW  ) != 0;
-            if ( isParentOK && !DWM.containClient( parent ) )
+            if ( isParentOK && !ContainClient( parent ) )
             {
                 // なんか見えないウィンドウをmanageするので
                 //Manage( hwnd );
@@ -438,9 +514,33 @@ namespace TileManTest
             return false;
         }
 
+        private bool ContainClient( IntPtr hwnd )
+        {
+            foreach ( var item in TagClientDic.Values )
+            {
+                bool contains = item.Any( c => c.Hwnd == hwnd );
+                if ( contains )
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         void ResizeClient( Client c , int x , int y , int w , int h )
         {
             DWM.resize( c , x , y , w , h , ScreenGeom.Rect );
+        }
+
+        void ShowHide( Client client )
+        {
+            // 見えるべきでないものを見えなくし、逆を見せる
+        }
+
+        void Tag( int i )
+        {
+            SelectedTag = i;
+            Tile( );
         }
 
         void Tile()
@@ -486,8 +586,21 @@ namespace TileManTest
         void Unmanage( Client client )
         {
             DWM.setVisibility( client.Hwnd , true );
-            DWM.detach( client );
+            Detach( client );
 
+        }
+
+        private void Detach( Client client )
+        {
+            foreach ( var item in TagClientDic.Values )
+            {
+                var contains = item.FirstOrDefault( c => c.Hwnd == client.Hwnd );
+                if ( contains != null )
+                {
+                    item.Remove( contains );
+                    return ;
+                }
+            }
         }
 
         void UpdateBar()

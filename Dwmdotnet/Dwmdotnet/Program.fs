@@ -25,7 +25,7 @@ namespace DWMDotnet
     let selectedTags, selLt = 0, 0
     
     let Rules    : Types.Rule list       = []
-    let ClientList  : Types.Client list ref = ref []
+    //let ClientList  : Types.Client list ref = ref []
     let Selected : Types.Client list ref = ref []
     
     let Stack    : Types.Client list = []
@@ -105,7 +105,7 @@ namespace DWMDotnet
     //  for i in Stack do
     //    showhide(i)
     
-    let attach c = //(ptr:IntPtr) =
+    //let attach c = //(ptr:IntPtr) =
       //let c =
       //  {
       //    Hwnd = ptr
@@ -114,16 +114,16 @@ namespace DWMDotnet
       //    ThreadId 
 
       //  }
-      ClientList := c::ClientList.contents
+    //  ClientList := c::ClientList.contents
     
-    let containClient ptr =
-      ClientList.Value |> List.exists (fun c->c.Hwnd = ptr)
+    //let containClient ptr =
+    //  ClientList.Value |> List.exists (fun c->c.Hwnd = ptr)
 
-    let allClient() =
-      let list = new List<Client>()
-      for i in ClientList.Value do
-        list.Add(i)
-      list
+    //let allClient() =
+    //  let list = new List<Client>()
+    //  for i in ClientList.Value do
+    //    list.Add(i)
+    //  list
 
     let attachStack (c:Types.Client) =
       //Stack:= c::Stack.contents
@@ -133,9 +133,9 @@ namespace DWMDotnet
       let mutable x = 0
       x 
 
-    let detach (client:Client) =
-      let dropList = ClientList.Value |> List.filter (fun c->c <> client)
-      ClientList := dropList
+    //let detach (client:Client) =
+    //  let dropList = ClientList.Value |> List.filter (fun c->c.Hwnd <> client.Hwnd)
+    //  ClientList := dropList
     
     let onHandle (handle) =
       true

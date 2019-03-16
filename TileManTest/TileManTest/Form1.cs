@@ -1,10 +1,10 @@
 ﻿using DWMDotnet;
 using Handles;
 using MouseCaptureTest;
+using NetCoreEx.Geometry;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
@@ -344,11 +344,6 @@ namespace TileManTest
             }
         }
 
-        void Update()
-        {
-            //User32Methods.FindWindow( className , null );
-        }
-
         Client GetClient( IntPtr hwnd )
         {
             foreach ( var item in TagClientDic.Values )
@@ -377,10 +372,10 @@ namespace TileManTest
             WindowInfo windowInfo = new WindowInfo();
             User32Methods.GetWindowInfo( hwnd , ref windowInfo );
             var title = ThreadWindowHandles.GetWindowText( hwnd );
-            Client client = new Client( 
-                hwnd , ThreadWindowHandles.GetParent(hwnd) , IntPtr.Zero ,
-                (int)User32Methods.GetWindowThreadProcessId(hwnd , IntPtr.Zero ) ,
-                new System.Drawing.Rectangle() , 0 , true , title );
+            Client client = new Client(
+                hwnd , ThreadWindowHandles.GetParent( hwnd ) , IntPtr.Zero ,
+                ( int )User32Methods.GetWindowThreadProcessId( hwnd , IntPtr.Zero ) ,
+                new System.Drawing.Rectangle( ) , 0 , true , WindowStyle( hwnd ) , title );
 
             WindowPlacement windowPlacement = new WindowPlacement();
             if ( ThreadWindowHandles.IsWindowVisible( client.Hwnd ) > 0 )
@@ -445,7 +440,7 @@ namespace TileManTest
 
         bool IsManageable( IntPtr hwnd )
         {
-            if ( ContainClient(hwnd) )
+            if ( ContainClient( hwnd ) )
             {
                 return false;
             }
@@ -455,36 +450,33 @@ namespace TileManTest
                 return false;
             }
             var parent = ThreadWindowHandles.GetParent( hwnd );
-            var owner  = User32Helpers.GetWindow( hwnd , GetWindowFlag.GW_OWNER );
-            var style   = (WindowStyles)User32Helpers.GetWindowLongPtr( hwnd , WindowLongFlags.GWL_STYLE ).ToInt32();
+            var owner = User32Helpers.GetWindow( hwnd , GetWindowFlag.GW_OWNER );
+            WindowStyles style = WindowStyle( hwnd );
             //tosafeがほしいけど別ライブラリ内
-            var exStyle = (WindowExStyles)(User32Helpers.GetWindowLongPtr( hwnd , WindowLongFlags.GWL_EXSTYLE ).ToInt32());
+            var exStyle = ( WindowExStyles )( User32Helpers.GetWindowLongPtr( hwnd , WindowLongFlags.GWL_EXSTYLE ).ToInt32( ) );
             bool isParentOK = parent != IntPtr.Zero && IsManageable( parent );
             bool isTool = ( exStyle & WindowExStyles.WS_EX_TOOLWINDOW ) != 0;
-            bool isApp  = ( exStyle & WindowExStyles.WS_EX_APPWINDOW  ) != 0;
+            bool isApp = ( exStyle & WindowExStyles.WS_EX_APPWINDOW ) != 0;
             if ( isParentOK && !ContainClient( parent ) )
             {
                 // なんか見えないウィンドウをmanageするので
                 //Manage( hwnd );
             }
-	/* XXX: should we do this? */
+            /* XXX: should we do this? */
             //if ( GetWindowTextLength( hwnd ) == 0 )
             //{
             //    debug( "   title: NULL\n" );
             //    debug( "  manage: false\n" );
             //    return false;
             //}
-            if ( (style & WindowStyles.WS_DISABLED) != 0 )
+            if ( ( style & WindowStyles.WS_DISABLED ) != 0 )
             {
                 return false;
             }
+            // WS_POPUPWINDOW も含んでいる
             if ( ( style & WindowStyles.WS_POPUP ) != 0 )
             {
                 return false;
-            }
-            if ( ( style & WindowStyles.WS_POPUPWINDOW ) != 0 )
-            {
-                //return false;
             }
             bool hasParent = parent != IntPtr.Zero;
             var winIsVisibleAndNoParent = !hasParent && User32Methods.IsWindowVisible( hwnd );
@@ -496,7 +488,7 @@ namespace TileManTest
                     {
 
                         Trace.Write( value );
-                        Trace.WriteLine( " isTool : " + isTool + " isApp : " + isApp + " style : " + style);
+                        Trace.WriteLine( " isTool : " + isTool + " isApp : " + isApp + " style : " + style );
                     }
                     return true;
                 }
@@ -506,12 +498,17 @@ namespace TileManTest
                     {
 
                         Trace.Write( value );
-                        Trace.WriteLine( " isTool : " + isTool + " isApp : " + isApp + " style : " + style);
+                        Trace.WriteLine( " isTool : " + isTool + " isApp : " + isApp + " style : " + style );
                     }
                     return true;
                 }
             }
             return false;
+        }
+
+        private static WindowStyles WindowStyle( IntPtr hwnd )
+        {
+            return ( WindowStyles )User32Helpers.GetWindowLongPtr( hwnd , WindowLongFlags.GWL_STYLE ).ToInt32( );
         }
 
         private bool ContainClient( IntPtr hwnd )
@@ -529,7 +526,10 @@ namespace TileManTest
 
         void ResizeClient( Client c , int x , int y , int w , int h )
         {
-            DWM.resize( c , x , y , w , h , ScreenGeom.Rect );
+            Trace.WriteLine( $"{c.Title} rect : {c.Rect}" );
+            Rectangle rect = new Rectangle( x , y , x + w , y + h );
+            DWM.resize( c , rect.Left , rect.Top , rect.Width , rect.Height , ScreenGeom.Rect );
+            Trace.WriteLine( $"after {c.Title} rect : {c.Rect}" );
         }
 
         void ShowHide( Client client )
@@ -537,7 +537,7 @@ namespace TileManTest
             // 見えるべきでないものを見えなくし、逆を見せる
         }
 
-        void Tag( int i )
+        void SelectTag( int i )
         {
             SelectedTag = i;
             Tile( );
@@ -558,10 +558,10 @@ namespace TileManTest
             {
                 return;
             }
-            bool winIsLargerThanMaster = winGeom.Right + masterWidth > master.Rect.X + master.Rect.Width;
-            var x = winIsLargerThanMaster ? master.Rect.X + master.Rect.Width + master.Bw * 2 : winGeom.Right + masterWidth;
+            bool winIsLargerThanMaster = winGeom.Left + masterWidth > master.Rect.X + master.Rect.Width;
+            var x = winIsLargerThanMaster ? master.Rect.X + master.Rect.Width + master.Bw * 2 : winGeom.Left+ masterWidth;
             int y = winGeom.Top;
-            var w = winIsLargerThanMaster ? winGeom.Right + winGeom.Width - x : winGeom.Width - masterWidth;
+            var w = winIsLargerThanMaster ? winGeom.Left + winGeom.Width - x : winGeom.Width - masterWidth;
             var h = WindowGeom.Height / clientList.Count;
             if ( h < BarHeight )
             {
@@ -575,10 +575,14 @@ namespace TileManTest
                 var item = slaveList[ i ];
                 bool isLastOne = ( i + 1 == slaveCount );
                 var height = isLastOne ? winGeom.Top + winGeom.Height - y -2 * item.Bw : h - 2 * item.Bw;
+                User32Methods.GetWindowRect( item.Hwnd , out Rectangle winRect );
+                User32Methods.GetClientRect( item.Hwnd , out Rectangle cliRect );
                 ResizeClient( item , (int)x , y , (int)w - 2 * item.Bw , height );
-                if ( isLastOne )
+                if ( !isLastOne )
                 {
                     y = item.Rect.Top + item.Rect.Height;
+                    var title = winRect.Height - cliRect.Height;
+                    y += title;
                 }
             }
         }

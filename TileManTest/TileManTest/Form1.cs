@@ -25,21 +25,14 @@ namespace TileManTest
         int BarHeight;
         int BarY;
         bool ShowBar = true;
-        bool TopBar =true;
+        bool TopBar = true;
+        bool IsDirty = false;
         int Blw = 33;
-        int UIHeight = 138;
+        int UIHeight = 118;
 
         float MasterFact = 0.55f;
         string SelectedTag = "1";
 
-        List<TagType> TagList = new List<TagType>( )
-        {
-            "1",
-            "2",
-            "3",
-            "4",
-            "5",
-        };
         Dictionary<TagType , TagManager> TagClientDic = new Dictionary<TagType, TagManager>( );
 
         List<Client> SelectedClientList()
@@ -65,6 +58,7 @@ namespace TileManTest
             try
             {
                 InitializeComponent( );
+
                 ClientTitleList = new List<ListBox>( )
                 {
                     listBox1,
@@ -72,8 +66,13 @@ namespace TileManTest
                     listBox3,
                     listBox4,
                     listBox5,
+                    listBox6,
+                    listBox7,
+                    listBox8,
+                    listBox9,
                 };
-                for ( int i = 1 ; i < 6 ; i++ )
+
+                for ( int i = 1 ; i < 10 ; i++ )
                 {
                     Keys d0 = ( Keys )( ( int )Keys.D0 + i );
                     const Keys changeTag = Keys.Control ;
@@ -135,19 +134,6 @@ namespace TileManTest
         {
             CleanUp( );
 
-        }
-
-        void DrawBar()
-        {
-            RECT barRect = new RECT( 0 , 0 , ScreenGeom.Width , BarHeight );
-            for ( int i = 0 ; i < TagList.Count ; i++ )
-            {
-                var item = TagList[ i ];
-                //int w = DWM.textnw( Handle , item );
-                //DrawText( item , SelectedTag == i , ScreenGeom );
-                //DrawSquare( SelectedTag == i , false , false , barRect );
-                //barRect.Right += w;
-            }
         }
 
         void DrawSquare( bool filled , bool empty , bool invert , RECT rect )
@@ -215,20 +201,6 @@ namespace TileManTest
         {
         }
 
-        void ButtonPress()
-        {
-            var point = MousePosition;
-            int x = 0;
-            for ( int i = 0 ; i < TagList.Count ; i++ )
-            {
-                //int nextX = x + DWM.textnw( Handle , TagList[ i ] );
-                //if ( x < point.X && point.X < nextX )
-                {
-
-                }
-            }
-        }
-
         void SetSelected( Client client )
         {
             // drawborder何もしてない
@@ -258,7 +230,6 @@ namespace TileManTest
 
                     break;
                 case WM.LBUTTONDOWN:
-                    ButtonPress( );
                     break;
 
                 default:
@@ -316,9 +287,10 @@ namespace TileManTest
             {
                 if ( ActiveClient != null )
                 {
+                    IsDirty = true;
                     DWM.setClientVisibility( ActiveClient , false );
                     currentTag.Remove( ActiveClient );
-                    TagClientDic[ sentDest.ToString( ) ].Add( ActiveClient );
+                    Attach( ActiveClient , sentDest.ToString( ) );
                     Tile( );
                     ActiveClient = TryGetMaster( );
                 }
@@ -335,6 +307,7 @@ namespace TileManTest
             {
                 return;
             }
+            ActiveClient = null;
             currentTag.Visible( false );
             TagClientDic[ itemID ].Visible( true );
             SelectedTag = itemID;
@@ -445,13 +418,14 @@ namespace TileManTest
 
             //    label1.Text = Win32dll.QueryFullProcessImageName( wnd , false );
             //}
-            StringBuilder nameList = new StringBuilder( );
-            foreach ( var tagMan in TagClientDic.Values )
+            if ( IsDirty )
             {
+                foreach ( var tagMan in TagClientDic.Values )
+                {
                     ClientTitleList[ tagMan.Id - 1 ].Items.Clear( );
-                    ClientTitleList[ tagMan.Id - 1 ].Items.AddRange( tagMan.ClientTitles.ToArray() );
-                    //nameList.Append( item.IsActive ).Append( " " );
-                    //nameList.Append( item.Title ).Append( " : " ).Append( tagMan.Id ).Append( Environment.NewLine );
+                    ClientTitleList[ tagMan.Id - 1 ].Items.AddRange( tagMan.ClientTitles.ToArray( ) );
+                }
+                IsDirty = false;
             }
             //label3.Text = nameList.ToString( );
             Client client = TryGetMaster( );
@@ -524,14 +498,14 @@ namespace TileManTest
                 DWM.resize( client , windowRect.Left , windowRect.Top , windowRect.Width , windowRect.Height , WindowGeom.Rect );
             }
 
-            Attach( client );
+            Attach( client , SelectedTag);
             return client;
         }
 
-        private void Attach( Client client )
+        private void Attach( Client client , string dest )
         {
-            var tag = SelectedTag;
-            TagClientDic[ tag ].Add( client );
+            TagClientDic[ dest ].Add( client );
+            IsDirty = true;
         }
 
         bool Scan( IntPtr hwnd , IntPtr lParam )
@@ -561,6 +535,7 @@ namespace TileManTest
         void SetUp()
         {
             User32Methods.EnumWindows( Scan , IntPtr.Zero );
+            IsDirty = true;
         }
 
         void SetupBar()
@@ -748,7 +723,6 @@ namespace TileManTest
         {
             DWM.setClientVisibility( client , true );
             Detach( client );
-
         }
 
         private void Detach( Client client )
@@ -758,6 +732,7 @@ namespace TileManTest
                 var contains = item.Remove(client);
                 if ( contains  )
                 {
+                    IsDirty = true;
                     return ;
                 }
             }

@@ -19,6 +19,7 @@ namespace TileManTest
     {
         Timer t;
         uint ShellHookID;
+        private List<HotKey> HotkeyList = new List<HotKey>( );
         RECT ScreenGeom;
         RECT WindowGeom;
         int BarHeight;
@@ -29,63 +30,92 @@ namespace TileManTest
 
         float MasterFact = 0.55f;
         int SelectedTag;
-        int SelectedClient;
 
-        List<string> TagList = new List<string>( )
+        List<int> TagList = new List<int>( )
         {
-            "1",
-            "2",
-            "3",
-            "4",
-            "5",
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
         };
-        MultiDictionary<string , Client> TagClientDic = new MultiDictionary<string , Client>( );
+        Dictionary<int , TagManager> TagClientDic = new Dictionary<int, TagManager>( );
 
         List<Client> SelectedClientList()
         {
-            return TagClientDic[ TagList[ SelectedTag ] ];
+            return TagClientDic[ TagList[ SelectedTag ] ].ClientList;
         }
 
         void ChangeMaster( Client client )
         {
-            var nextMaster = SelectedClientList( ).Find( c => c == client );
-            List<Client> clientList = TagClientDic[ TagList[ SelectedTag ] ];
+            List<Client> list = SelectedClientList( );
+            var nextMaster = list.Find( c => c == client );
+            List<Client> clientList = list;
             clientList.Remove( client );
             clientList.Reverse( );
             clientList.Add( client );
             clientList.Reverse( );
         }
 
-        bool Initialized;
-
         public Form1()
         {
-            MessageBox.Show( "hoge" );
             try
             {
                 InitializeComponent( );
+
+
+                for ( int i = 0 ; i < 10 ; i++ )
+                {
+                    Keys d0 = ( Keys )( ( int )Keys.D0 + i );
+                    const Keys changeTag = Keys.Control | Keys.Space;
+                    const Keys sendTag   = Keys.Control | Keys.Space | Keys.Shift;
+                    var hotkeyNotify = new HotKey( this.Handle, i   , changeTag | d0 );
+                    var hotkeySend   = new HotKey( this.Handle, i + 10, sendTag | d0 );
+                    HotkeyList.Add( hotkeyNotify );
+                    HotkeyList.Add( hotkeySend );
+                    var temp = new TagManager( new List<Client>());
+                    TagClientDic.Add( i , temp );
+
+                }
+                SetUp( );
+                ActiveClient = Master( );
+                UpdateGeom( );
+                ThreadWindowHandles.RegisterShellHookWindow( Handle );
+                ShellHookID = ThreadWindowHandles.RegisterWindowMessage( "SHELLHOOK" );
+                FormClosing += Form1_FormClosing;
+                Tile( );
                 t = new Timer( );
                 t.Interval = 10;
                 t.Tick += T_Tick;
                 t.Start( );
-                SetUp( );
-                UpdateGeom( );
-                ThreadWindowHandles.RegisterShellHookWindow( Handle );
-                ShellHookID = ThreadWindowHandles.RegisterWindowMessage( "SHELLHOOK" );
-                Tile( );
-                Initialized = true;
             }
             catch ( Exception ex )
             {
-                MessageBox.Show( ex.ToString() );
-                foreach ( var wnd in TagClientDic.Values )
+                MessageBox.Show( ex.ToString( ) );
+                CleanUp( );
+            }
+        }
+
+        private void CleanUp()
+        {
+            foreach ( var wnd in TagClientDic.Values )
+            {
+                foreach ( var item in wnd.ClientList )
                 {
-                    foreach ( var item in wnd )
-                    {
-                        User32Methods.MoveWindow( item.Hwnd , 0 , 0 , 640 , 480 , true );
-                    }
+                    User32Methods.MoveWindow( item.Hwnd , 0 , 0 , 640 , 480 , true );
                 }
             }
+            foreach ( var item in HotkeyList )
+            {
+                item.Unregister( );
+            }
+        }
+
+        private void Form1_FormClosing( object sender , FormClosingEventArgs e )
+        {
+            CleanUp( );
+
         }
 
         void DrawBar()
@@ -94,17 +124,17 @@ namespace TileManTest
             for ( int i = 0 ; i < TagList.Count ; i++ )
             {
                 var item = TagList[ i ];
-                int w = DWM.textnw( Handle , item );
-                DrawText( item , SelectedTag == i , ScreenGeom );
+                //int w = DWM.textnw( Handle , item );
+                //DrawText( item , SelectedTag == i , ScreenGeom );
                 DrawSquare( SelectedTag == i , false , false , barRect );
-                barRect.Right += w;
+                //barRect.Right += w;
             }
         }
 
         void DrawSquare( bool filled , bool empty , bool invert , RECT rect )
         {
             int size = 5;
-            NetCoreEx.Geometry.Rectangle extended;// = rect;
+            Rectangle extended;// = rect;
             extended.Left = rect.Left + 1;
             extended.Top = rect.Top + 1;
             extended.Right = rect.Right + size;
@@ -134,7 +164,7 @@ namespace TileManTest
 
         void DrawText( string text , bool invert , RECT rect)
         {
-            NetCoreEx.Geometry.Rectangle extended;
+            Rectangle extended;
             extended.Left = rect.Left;
             extended.Top = rect.Top;
             extended.Right = rect.Right + rect.Width;
@@ -172,8 +202,8 @@ namespace TileManTest
             int x = 0;
             for ( int i = 0 ; i < TagList.Count ; i++ )
             {
-                int nextX = x + DWM.textnw( Handle , TagList[ i ] );
-                if ( x < point.X && point.X < nextX )
+                //int nextX = x + DWM.textnw( Handle , TagList[ i ] );
+                //if ( x < point.X && point.X < nextX )
                 {
 
                 }
@@ -183,7 +213,6 @@ namespace TileManTest
         void SetSelected( Client client )
         {
             // drawborder何もしてない
-            SelectedClient = SelectedClientList( ).IndexOf( client );
         }
 
         protected override void WndProc( ref System.Windows.Forms.Message m )
@@ -225,7 +254,14 @@ namespace TileManTest
             }
             else if ( code == WM.HOTKEY )
             {
-
+                foreach ( var item in HotkeyList )
+                {
+                    if ( m.LParam == item.LParam )
+                    {
+                        Trace.WriteLine( $"hotkey{item.ID}" );
+                        TagSignal( item );
+                    }
+                }
             }
             else
             {
@@ -242,6 +278,28 @@ namespace TileManTest
 
                 //if(code != 0 && wParam != IntPtr.Zero)
                 //Trace.WriteLine( $"code : {code} wParam : {wParam}" );
+        }
+
+        Client ActiveClient;
+
+        private void TagSignal( HotKey item )
+        {
+            bool send = 9 < item.ID;
+            TagManager selectedTag = TagClientDic[ SelectedTag ];
+            if ( send )
+            {
+                int sentDest = item.ID - 10;
+                selectedTag.Remove( ActiveClient );
+                TagClientDic[ sentDest ].Add( ActiveClient );
+                Tile( );
+            }
+            else
+            {
+                selectedTag.Visible( false );
+                TagClientDic[ item.ID ].Visible( true );
+                SelectedTag = item.ID;
+                Tile( );
+            }
         }
 
         private void OtherWindow( System.Windows.Forms.Message m , WM param , Client client )
@@ -271,10 +329,11 @@ namespace TileManTest
                 case WM.HSHELL_RUDEAPPACTIVATED:
                     if ( client != null )
                     {
-
+                        ActiveClient = client;
                         Trace.WriteLine( "active : " + ThreadWindowHandles.GetWindowText( m.LParam ) );
                     }
                     break;
+
                 default:
                     break;
             }
@@ -325,7 +384,7 @@ namespace TileManTest
             var wnd = Win32dll.WindowFromPoint( MousePosition.X , MousePosition.Y );
             uint procID = 0;
             label2.Text = wnd.ToString();
-            label1.Text = SelectedClientList( ).Aggregate( "" , ( acc , c ) => acc + "\n" + c.Title );
+            //label1.Text = SelectedClientList( ).Aggregate( "" , ( acc , c ) => acc + "\n" + c.Title );
             Win32dll.GetWindowThreadProcessId( wnd ,out procID);
             wnd = Win32dll.OpenProcess( Win32dll.ProcessAccessFlags.QueryInformation | Win32dll.ProcessAccessFlags.VMRead | Win32dll.ProcessAccessFlags.Terminate , false , procID );
             label3.Text = wnd.ToString();
@@ -342,13 +401,31 @@ namespace TileManTest
                 //User32Methods.WindowFromPoint(User32Methods.mou)
                 label1.Text = Win32dll.QueryFullProcessImageName( wnd , false );
             }
+
+            Client client = Master( );
+            if ( client.HasUpdate( ) )
+            {
+                foreach ( var item in SlaveList() )
+                {
+                    int x = client.Rect.Width;
+                    item.SetXW( x , ScreenGeom.Width - x );
+                }
+                return;
+            }
+            //foreach ( var item in SlaveList() )
+            //{
+            //    if ( item.HasUpdate( ) )
+            //    {
+
+            //    }
+            //}
         }
 
         Client GetClient( IntPtr hwnd )
         {
             foreach ( var item in TagClientDic.Values )
             {
-                var foundItem = item.FirstOrDefault( c => c.Hwnd == hwnd );
+                var foundItem = item.GetClient( hwnd );
                 if ( foundItem != null )
                 {
                     return foundItem;
@@ -398,7 +475,7 @@ namespace TileManTest
         private void Attach( Client client )
         {
             var tag = TagList[ SelectedTag ];
-            TagClientDic.Add( tag , client );
+            TagClientDic[ tag ].Add( client );
         }
 
         bool Scan( IntPtr hwnd , IntPtr lParam )
@@ -445,10 +522,18 @@ namespace TileManTest
                 return false;
             }
             String value = ThreadWindowHandles.GetWindowText( hwnd );
+            String classText = ThreadWindowHandles.GetClassText( hwnd );
             if ( value.Contains( "Visual" ) )
             {
                 return false;
             }
+            //Trace.WriteLine( value + " : className = " +classText );
+            //if ( value.Contains( "Chrome" ) )
+            //if(classText.Contains("CabinetWClass"))
+            //{
+            //    DWM.setVisibility( hwnd , true );
+            //    return true;
+            //}
             var parent = ThreadWindowHandles.GetParent( hwnd );
             var owner = User32Helpers.GetWindow( hwnd , GetWindowFlag.GW_OWNER );
             WindowStyles style = WindowStyle( hwnd );
@@ -511,11 +596,19 @@ namespace TileManTest
             return ( WindowStyles )User32Helpers.GetWindowLongPtr( hwnd , WindowLongFlags.GWL_STYLE ).ToInt32( );
         }
 
+        //private static bool IsInvisible( IntPtr hwnd )
+        //{
+
+        //    var invisible = WindowStyles. || SWP.NOACTIVATE || SWP.NOMOVE || SWP.NOSIZE || SWP.NOZORDER
+        //    var style = WindowStyle( hwnd );
+        //    if(style )
+        //}
+
         private bool ContainClient( IntPtr hwnd )
         {
             foreach ( var item in TagClientDic.Values )
             {
-                bool contains = item.Any( c => c.Hwnd == hwnd );
+                bool contains = item.HasClient( hwnd );
                 if ( contains )
                 {
                     return true;
@@ -546,6 +639,10 @@ namespace TileManTest
         void Tile()
         {
             List<Client> clientList = SelectedClientList( );
+            if ( clientList.Count == 0 )
+            {
+                return;
+            }
             var master = clientList.First( );
             RECT winGeom = WindowGeom;
             var masterWidth = MasterFact * winGeom.Width;
@@ -553,13 +650,13 @@ namespace TileManTest
             bool onlyOne = clientList.Count == 1;
             float v = ( onlyOne ? winGeom.Width : masterWidth ) - ( 2 * master.Bw );
             ResizeClient( master , winGeom.Left , winGeom.Top ,
-                (int)v , winGeom.Height - 2 * master.Bw );
+                ( int )v , winGeom.Height - 2 * master.Bw );
             if ( onlyOne )
             {
                 return;
             }
             bool winIsLargerThanMaster = winGeom.Left + masterWidth > master.Rect.X + master.Rect.Width;
-            var x = winIsLargerThanMaster ? master.Rect.X + master.Rect.Width + master.Bw * 2 : winGeom.Left+ masterWidth;
+            var x = winIsLargerThanMaster ? master.Rect.X + master.Rect.Width + master.Bw * 2 : winGeom.Left + masterWidth;
             int y = winGeom.Top;
             var w = winIsLargerThanMaster ? winGeom.Left + winGeom.Width - x : winGeom.Width - masterWidth;
             var h = WindowGeom.Height / clientList.Count;
@@ -567,17 +664,17 @@ namespace TileManTest
             {
                 h = winGeom.Height;
             }
-            var slaveList = clientList.Skip( 1 ).ToList( );
+            var slaveList = SlaveList( );
             int slaveCount = slaveList.Count;
             for ( int i = 0 ; i < slaveCount ; i++ )
             {
 
                 var item = slaveList[ i ];
                 bool isLastOne = ( i + 1 == slaveCount );
-                var height = isLastOne ? winGeom.Top + winGeom.Height - y -2 * item.Bw : h - 2 * item.Bw;
+                var height = isLastOne ? winGeom.Top + winGeom.Height - y - 2 * item.Bw : h - 2 * item.Bw;
                 User32Methods.GetWindowRect( item.Hwnd , out Rectangle winRect );
                 User32Methods.GetClientRect( item.Hwnd , out Rectangle cliRect );
-                ResizeClient( item , (int)x , y , (int)w - 2 * item.Bw , height );
+                ResizeClient( item , ( int )x , y , ( int )w - 2 * item.Bw , height );
                 if ( !isLastOne )
                 {
                     y = item.Rect.Top + item.Rect.Height;
@@ -585,6 +682,16 @@ namespace TileManTest
                     y += title;
                 }
             }
+        }
+
+        private Client Master( )
+        {
+            return SelectedClientList( ).First( );
+        }
+
+        private List<Client> SlaveList( )
+        {
+            return SelectedClientList( ).Skip( 1 ).ToList( );
         }
 
         void Unmanage( Client client )
@@ -598,10 +705,9 @@ namespace TileManTest
         {
             foreach ( var item in TagClientDic.Values )
             {
-                var contains = item.FirstOrDefault( c => c.Hwnd == client.Hwnd );
-                if ( contains != null )
+                var contains = item.Remove(client);
+                if ( contains  )
                 {
-                    item.Remove( contains );
                     return ;
                 }
             }

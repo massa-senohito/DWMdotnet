@@ -11,20 +11,39 @@ namespace TileManTest
     class TagManager
     {
         public TagManager(
-          List<Client> clientlist
-
+          List<Client> clientlist , int id
         )
         {
             ClientList = clientlist;
+            Id = id;
+            ClientsAreVisible = true;
+        }
 
+        public List<Client> ClientList
+        {
+            get;
+            private set;
+        }
+
+        public int Id
+        {
+            get;
+            private set;
+        }
+
+        public bool ClientsAreVisible
+        {
+            get;
+            private set;
         }
 
         public void Visible(bool visible)
         {
             foreach ( var item in ClientList )
             {
-                DWM.setVisibility( item.Hwnd , visible);
+                DWM.setClientVisibility( item , visible);
             }
+            ClientsAreVisible = visible;
         }
 
         public Client GetClient( IntPtr hwnd )
@@ -58,10 +77,17 @@ namespace TileManTest
             return false;
         }
 
-        public List<Client> ClientList
+
+
+        public IEnumerable<string> ClientTitles
         {
-            get;
-            private set;
+            get
+            {
+                foreach ( var item in ClientList )
+                {
+                    yield return item.Title;
+                }
+            }
         }
 
     }

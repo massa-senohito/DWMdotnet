@@ -367,12 +367,12 @@ public static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int 
             }
             return null;
         }
-        public static StringBuilder GetClassText( IntPtr hWnd )
+        public static String GetClassText( IntPtr hWnd )
         {
             //ウィンドウのクラス名を取得する
             StringBuilder csb = new StringBuilder( 256 );
             GetClassName( hWnd , csb , csb.Capacity );
-            return csb;
+            return csb.ToString();
         }
         /// <summary>
         /// スレッドIDです。

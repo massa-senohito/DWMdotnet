@@ -45,6 +45,13 @@ namespace DWMDotnet
     let setVisibility hwnd visiblity =
       let visibleFlag = if visiblity then SWP.SHOWWINDOW else SWP.HIDEWINDOW
       Native.SetWindowPos(hwnd , nativeint 0 , 0 , 0 , 0 , 0 , visibleFlag ||| SWP.NOACTIVATE ||| SWP.NOMOVE ||| SWP.NOSIZE ||| SWP.NOZORDER) |> ignore
+      
+
+    let setClientVisibility (client : Client ) visiblity =
+      client.IsActive <- visiblity
+      if(not visiblity) then client.Ignore <- true
+      setVisibility client.Hwnd visiblity
+
     
     let Tags =
       [
@@ -119,16 +126,6 @@ namespace DWMDotnet
     //let containClient ptr =
     //  ClientList.Value |> List.exists (fun c->c.Hwnd = ptr)
 
-    //let allClient() =
-    //  let list = new List<Client>()
-    //  for i in ClientList.Value do
-    //    list.Add(i)
-    //  list
-
-    let attachStack (c:Types.Client) =
-      //Stack:= c::Stack.contents
-      ()
-    
     let buttonPress button point =
       let mutable x = 0
       x 
@@ -147,7 +144,7 @@ namespace DWMDotnet
       let mutable copyH = h
       //let scr = screenGeom
       if w <= 0 && h <= 0 then
-        setVisibility c.Hwnd false
+        setClientVisibility c false
       else
         if x > scr.Right + scr.Width then
           copyX <- scr.Width - width c

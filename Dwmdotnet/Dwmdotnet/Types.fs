@@ -1,6 +1,9 @@
 ﻿module Types
 open System
 open System.Runtime.InteropServices;
+open WinApi.User32
+open Handles
+open NetCoreEx.Geometry
 
 //typedef struct {
 //	int x, y, w, h;
@@ -34,15 +37,43 @@ type Client =
     //mutable Tags:int
     //IsMinimized:bool
     //mutable IsFloating:bool
-    IsActive:bool
-    //mutable Ignore:bool
+    mutable IsActive:bool
+    mutable Ignore:bool
     //Border:bool
     //mutable Wasvisible:bool
     //IsFixed:bool;
     //Isurgent:bool;    // XXX: useless?
     //Next:Client
     //mutable Snext:Client
+    Style : WindowStyles
     Title:string
+  }
+  member this.HasUpdate() =
+    let rect = ref <|new Rectangle()
+    let ok = User32Methods.GetWindowRect(this.Hwnd,rect)
+    let rect = !rect
+    let rect = new System.Drawing.Rectangle(rect.Left,rect.Top,rect.Width ,rect.Height)
+    let hasUpdate = this.Rect <> rect
+    if hasUpdate then this.Rect<- rect
+    hasUpdate
+  member t.UpdateByRect() =
+    User32Methods.SetWindowPos(t.Hwnd , nativeint(0) , t.Rect.X , t.Rect.Y , t.Rect.Width , t.Rect.Height , WindowPositionFlags.SWP_NOACTIVATE)
+  member t.SetXW( x , w ) =
+    t.Rect <- new System.Drawing.Rectangle(x , t.Rect.Top, w , t.Rect.Height)
+    t.UpdateByRect()
+
+let createClient hwnd parent threadId style title =
+  {
+    Hwnd = hwnd
+    Parent = parent
+    Root = IntPtr.Zero
+    ThreadId = threadId
+    Rect = new System.Drawing.Rectangle()
+    Bw = 0
+    IsActive = true
+    Ignore = false
+    Style = style
+    Title = title
   }
 
 type Key =

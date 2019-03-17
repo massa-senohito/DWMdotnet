@@ -15,14 +15,15 @@ class HotKey
     private static extern int UnregisterHotKey( IntPtr hWnd ,
                                                int id );
 
-    public HotKey( IntPtr hWnd , int id , Keys key )
+    public HotKey( IntPtr hWnd , int id , Keys key , Keys mod)
     {
         this.hWnd = hWnd;
         this.id = id;
 
         // Keys列挙体の値をWin32仮想キーコードと修飾キーに分離
         int keycode = ( int )( key & Keys.KeyCode );
-        int modifiers = ( int )( key & Keys.Modifiers ) >> 16;
+        Keys keys = mod & Keys.Modifiers;
+        int modifiers = ( int )keys >> 16;
 
         this.lParam = new IntPtr( modifiers | keycode << 16 );
 

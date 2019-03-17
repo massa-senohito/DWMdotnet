@@ -76,15 +76,15 @@ namespace TileManTest
                 for ( int i = 1 ; i < 6 ; i++ )
                 {
                     Keys d0 = ( Keys )( ( int )Keys.D0 + i );
-                    const Keys changeTag = Keys.Control | Keys.Space;
-                    const Keys sendTag   = Keys.Control | Keys.Alt | Keys.Shift;
-                    var hotkeyNotify = new HotKey( this.Handle, i   , changeTag | d0 );
-                    var hotkeySend   = new HotKey( this.Handle, i + 10, sendTag | d0 );
+                    const Keys changeTag = Keys.Control ;
+                    const Keys sendTag   = Keys.Control | Keys.Alt;
+                    var hotkeyNotify = new HotKey( this.Handle, i   , d0 , changeTag);
+                    var hotkeySend   = new HotKey( this.Handle, i + 10, d0 , sendTag);
                     HotkeyList.Add( hotkeyNotify );
                     HotkeyList.Add( hotkeySend );
                     var temp = new TagManager( new List<Client>() , i );
                     TagClientDic.Add( i.ToString() , temp );
-
+                    ClientTitleList[ i - 1 ].Click += Form1_SelectedIndexChanged;
                 }
                 SetUp( );
                 ActiveClient = TryGetMaster( );
@@ -107,6 +107,14 @@ namespace TileManTest
             }
         }
 
+        private void Form1_SelectedIndexChanged( object sender , EventArgs e )
+        {
+            var name = sender as ListBox;
+            var newTag = name.Name.Last( ).ToString();
+            ChangeTag( TagClientDic[ SelectedTag.ToString( ) ] , newTag );
+            SelectedTag = newTag;
+        }
+
         private void CleanUp()
         {
             foreach ( var tagMan in TagClientDic.Values )
@@ -114,7 +122,7 @@ namespace TileManTest
                 foreach ( var item in tagMan.ClientList )
                 {
                     DWM.setClientVisibility( item , true );
-                    User32Methods.MoveWindow( item.Hwnd , 0 , 0 , 640 , 480 , true );
+                    User32Methods.MoveWindow( item.Hwnd , 0 , 0 , WindowGeom.Width , 480 , true );
                 }
             }
             foreach ( var item in HotkeyList )
@@ -243,10 +251,10 @@ namespace TileManTest
                     break;
                 case WM.PAINT:
 
-                    PaintStruct paintStruct;
-                    User32Methods.BeginPaint( m.HWnd , out paintStruct );
-                    DrawBar( );
-                    User32Methods.EndPaint( m.HWnd , ref paintStruct );
+                    //PaintStruct paintStruct;
+                    //User32Methods.BeginPaint( m.HWnd , out paintStruct );
+                    //DrawBar( );
+                    //User32Methods.EndPaint( m.HWnd , ref paintStruct );
 
                     break;
                 case WM.LBUTTONDOWN:
@@ -296,23 +304,41 @@ namespace TileManTest
         private void TagSignal( HotKey item )
         {
             bool send = 9 < item.ID;
-            TagManager selectedTag = TagClientDic[ SelectedTag.ToString() ];
+            TagManager currentTag = TagClientDic[ SelectedTag.ToString() ];
+            string itemID = item.ID.ToString( );
+            int sentDest = item.ID - 10;
+            // 同じタグなら再度入らないように
+            if ( sentDest.ToString() == SelectedTag )
+            {
+                return;
+            }
             if ( send )
             {
-                int sentDest = item.ID - 10;
-                DWM.setClientVisibility( ActiveClient , false );
-                selectedTag.Remove( ActiveClient );
-                TagClientDic[ sentDest.ToString() ].Add( ActiveClient );
-                Tile( );
+                if ( ActiveClient != null )
+                {
+                    DWM.setClientVisibility( ActiveClient , false );
+                    currentTag.Remove( ActiveClient );
+                    TagClientDic[ sentDest.ToString( ) ].Add( ActiveClient );
+                    Tile( );
+                    ActiveClient = TryGetMaster( );
+                }
             }
             else
             {
-                selectedTag.Visible( false );
-                string itemID = item.ID.ToString( );
-                TagClientDic[ itemID ].Visible( true );
-                SelectedTag = itemID;
-                Tile( );
+                ChangeTag( currentTag , itemID );
             }
+        }
+
+        private void ChangeTag( TagManager currentTag , string itemID )
+        {
+            if ( itemID == SelectedTag )
+            {
+                return;
+            }
+            currentTag.Visible( false );
+            TagClientDic[ itemID ].Visible( true );
+            SelectedTag = itemID;
+            Tile( );
         }
 
         private void OtherWindow( System.Windows.Forms.Message m , WM param , Client client )
@@ -410,6 +436,7 @@ namespace TileManTest
             Win32dll.GetWindowThreadProcessId( wnd ,out procID);
             //wnd = Win32dll.OpenProcess( Win32dll.ProcessAccessFlags.QueryInformation | Win32dll.ProcessAccessFlags.VMRead | Win32dll.ProcessAccessFlags.Terminate , false , procID );
             //label3.Text = wnd.ToString();
+            label3.Text = SelectedTag;
             //var size = User32Methods.GetWindowTextLength( wnd );
             //if ( size > 0 )
             //{
@@ -556,9 +583,14 @@ namespace TileManTest
             }
             String value = ThreadWindowHandles.GetWindowText( hwnd );
             String classText = ThreadWindowHandles.GetClassText( hwnd );
-            if ( value.Contains( "Visual" ) )
+            if ( //value.Contains( "Visual" ) || 
+                value.Contains("Everything"))
             {
                 return false;
+            }
+            if ( value.Contains( "Orchis" ) )
+            {
+                Trace.WriteLine( "" );
             }
             //Trace.WriteLine( value + " : className = " + classText );
             //if ( value.Contains( "Chrome" ) || classText.Contains( "CabinetWClass" ) )
@@ -628,14 +660,6 @@ namespace TileManTest
             return ( WindowStyles )User32Helpers.GetWindowLongPtr( hwnd , WindowLongFlags.GWL_STYLE ).ToInt32( );
         }
 
-        //private static bool IsInvisible( IntPtr hwnd )
-        //{
-
-        //    var invisible = WindowStyles. || SWP.NOACTIVATE || SWP.NOMOVE || SWP.NOSIZE || SWP.NOZORDER
-        //    var style = WindowStyle( hwnd );
-        //    if(style )
-        //}
-
         private bool ContainClient( IntPtr hwnd )
         {
             foreach ( var item in TagClientDic.Values )
@@ -675,7 +699,7 @@ namespace TileManTest
 
             bool onlyOne = clientList.Count == 1;
             float v = ( onlyOne ? winGeom.Width : masterWidth ) - ( 2 * master.Bw );
-            ResizeClient( master , winGeom.Left , winGeom.Top ,
+            ResizeClient( master , winGeom.Left , winGeom.Top + UIHeight ,
                 ( int )v , winGeom.Height - 2 * master.Bw );
             if ( onlyOne )
             {

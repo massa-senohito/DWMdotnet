@@ -40,6 +40,7 @@
             this.listBox7 = new System.Windows.Forms.ListBox();
             this.listBox8 = new System.Windows.Forms.ListBox();
             this.listBox9 = new System.Windows.Forms.ListBox();
+            this.QuitButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // label1
@@ -150,12 +151,23 @@
             this.listBox9.Size = new System.Drawing.Size(120, 100);
             this.listBox9.TabIndex = 12;
             // 
+            // QuitButton
+            // 
+            this.QuitButton.Location = new System.Drawing.Point(1243, 9);
+            this.QuitButton.Name = "QuitButton";
+            this.QuitButton.Size = new System.Drawing.Size(48, 24);
+            this.QuitButton.TabIndex = 16;
+            this.QuitButton.Text = "quit";
+            this.QuitButton.UseVisualStyleBackColor = true;
+            this.QuitButton.Click += new System.EventHandler(this.QuitButton_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1392, 118);
             this.ControlBox = false;
+            this.Controls.Add(this.QuitButton);
             this.Controls.Add(this.listBox6);
             this.Controls.Add(this.listBox7);
             this.Controls.Add(this.listBox8);
@@ -191,6 +203,7 @@
         private System.Windows.Forms.ListBox listBox7;
         private System.Windows.Forms.ListBox listBox8;
         private System.Windows.Forms.ListBox listBox9;
+        private System.Windows.Forms.Button QuitButton;
     }
 }
 

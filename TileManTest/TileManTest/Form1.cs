@@ -108,25 +108,33 @@ namespace TileManTest
 
         private void Form1_SelectedIndexChanged( object sender , EventArgs e )
         {
-            var name = sender as ListBox;
-            var newTag = name.Name.Last( ).ToString();
+            var listBox = sender as ListBox;
+            var newTag  = listBox.Name.Last( ).ToString();
             ChangeTag( TagClientDic[ SelectedTag.ToString( ) ] , newTag );
             SelectedTag = newTag;
+            int selectedInd = listBox.SelectedIndex;
+            //label3.Text = listBox.Name + " " + selectedInd.ToString();
+            if ( selectedInd != ListBox.NoMatches )
+            {
+                User32Methods.SetForegroundWindow(
+                SelectedClientList( )[ selectedInd ].Hwnd );
+            }
         }
 
         private void CleanUp()
         {
+            int y = 0;
             foreach ( var tagMan in TagClientDic.Values )
             {
-                foreach ( var item in tagMan.ClientList )
+                foreach ( var client in tagMan.ClientList )
                 {
-                    DWM.setClientVisibility( item , true );
-                    User32Methods.MoveWindow( item.Hwnd , 0 , 0 , WindowGeom.Width , 480 , true );
+                    DWM.setClientVisibility( client , true );
+                    User32Methods.MoveWindow( client.Hwnd , 0 , y , WindowGeom.Width , 480 , true );
                 }
             }
-            foreach ( var item in HotkeyList )
+            foreach ( var hotkey in HotkeyList )
             {
-                item.Unregister( );
+                hotkey.Unregister( );
             }
         }
 
@@ -400,15 +408,32 @@ namespace TileManTest
             WindowGeom = new RECT( ScreenGeom );
         }
 
+        private void UpdateClient()
+        {
+            var bui = new StringBuilder( );
+            foreach ( var tagMan in TagClientDic.Values )
+            {
+                foreach ( var client in tagMan.ClientList )
+                {
+                    bui.Append( $"{client.Title} y = {client.Rect.Y} h = {client.Rect.Height}\n" );
+                    if ( client.HasTitleUpdate( ) )
+                    {
+                        IsDirty = true;
+                        return;
+                    }
+                }
+            }
+            //label3.Text = bui.ToString( );
+        }
+
         private void T_Tick( object sender , EventArgs e )
         {
             var wnd = Win32dll.WindowFromPoint( MousePosition.X , MousePosition.Y );
             uint procID = 0;
-            label2.Text = wnd.ToString();
+            label2.Text = wnd.ToString( );
             //label1.Text = SelectedClientList( ).Aggregate( "" , ( acc , c ) => acc + "\n" + c.Title );
-            Win32dll.GetWindowThreadProcessId( wnd ,out procID);
+            Win32dll.GetWindowThreadProcessId( wnd , out procID );
             //wnd = Win32dll.OpenProcess( Win32dll.ProcessAccessFlags.QueryInformation | Win32dll.ProcessAccessFlags.VMRead | Win32dll.ProcessAccessFlags.Terminate , false , procID );
-            //label3.Text = wnd.ToString();
             label3.Text = SelectedTag;
             //var size = User32Methods.GetWindowTextLength( wnd );
             //if ( size > 0 )
@@ -418,6 +443,8 @@ namespace TileManTest
 
             //    label1.Text = Win32dll.QueryFullProcessImageName( wnd , false );
             //}
+            UpdateClient( );
+
             if ( IsDirty )
             {
                 foreach ( var tagMan in TagClientDic.Values )
@@ -427,21 +454,9 @@ namespace TileManTest
                 }
                 IsDirty = false;
             }
-            //label3.Text = nameList.ToString( );
-            Client client = TryGetMaster( );
-            if ( client == null )
-            {
-                return;
-            }
-            if ( client.HasUpdate( ) )
-            {
-                foreach ( var item in SlaveList() )
-                {
-                    int x = client.Rect.Width;
-                    item.SetXW( x , ScreenGeom.Width - x );
-                }
-                return;
-            }
+
+            CalcSlaveSizeFromMaster( );
+
             //foreach ( var item in SlaveList() )
             //{
             //    if ( item.HasUpdate( ) )
@@ -449,6 +464,24 @@ namespace TileManTest
 
             //    }
             //}
+        }
+
+        private void CalcSlaveSizeFromMaster()
+        {
+            Client client = TryGetMaster( );
+            if ( client == null )
+            {
+                return;
+            }
+            if ( client.HasSizeUpdate( ) )
+            {
+                foreach ( var item in SlaveList( ) )
+                {
+                    int x = client.Rect.Width;
+                    item.SetXW( x , ScreenGeom.Width - x );
+                }
+                return;
+            }
         }
 
         Client GetClient( IntPtr hwnd )
@@ -747,5 +780,10 @@ namespace TileManTest
                 WindowPositionFlags.SWP_SHOWWINDOW | WindowPositionFlags.SWP_NOACTIVATE | WindowPositionFlags.SWP_NOSENDCHANGING );
         }
 
+        private void QuitButton_Click( object sender , EventArgs e )
+        {
+            CleanUp( );
+            Close( );
+        }
     }
 }

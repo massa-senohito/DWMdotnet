@@ -1,6 +1,8 @@
 ﻿using DWMDotnet;
+using MouseCaptureTest;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,9 +19,16 @@ namespace TileManTest
             ClientList = clientlist;
             Id = id;
             ClientsAreVisible = true;
+            IconList = new List<Icon>( );
         }
 
         public List<Client> ClientList
+        {
+            get;
+            private set;
+        }
+
+        public List<Icon> IconList
         {
             get;
             private set;
@@ -59,6 +68,8 @@ namespace TileManTest
         public void Add( Client c )
         {
             ClientList.Add( c );
+            Icon item = Win32dll.GetAppIcon( c.Hwnd );
+            IconList.Add( item );
         }
 
         public bool HasClient( IntPtr hwnd )
@@ -68,10 +79,13 @@ namespace TileManTest
 
         public bool Remove( Client client )
         {
-            var contains = ClientList.FirstOrDefault( c => c.Hwnd == client.Hwnd );
-            if ( contains != null )
+            var mayInd = ClientList.FindIndex( c => c.Hwnd == client.Hwnd );
+            if ( mayInd != -1 )
             {
-                ClientList.Remove( contains );
+                ClientList.RemoveAt( mayInd );
+                var icon = IconList[ mayInd ];
+                IconList.RemoveAt( mayInd );
+                icon?.Dispose( );
                 return true;
             }
             return false;
@@ -90,7 +104,7 @@ namespace TileManTest
             }
         }
 
-    }
+    } // class
 
 
-}
+} // namespace

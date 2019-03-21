@@ -8,11 +8,14 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using Whitebell.Library.Collections.Generic;
 using WinApi.Gdi32;
 using WinApi.User32;
 using static MouseCaptureTest.Win32dll;
 using static Types;
 using TagType = System.String;
+using DrawRectangle = System.Drawing.Rectangle;
+
 namespace TileManTest
 {
     public partial class Form1 : Form
@@ -32,8 +35,8 @@ namespace TileManTest
 
         float MasterFact = 0.55f;
         string SelectedTag = "1";
-
-        Dictionary<TagType , TagManager> TagClientDic = new Dictionary<TagType, TagManager>( );
+        //Ordered
+        OrderedDictionary<TagType , TagManager> TagClientDic = new OrderedDictionary<TagType, TagManager>( );
 
         List<Client> SelectedClientList()
         {
@@ -98,11 +101,31 @@ namespace TileManTest
                 t.Interval = 10;
                 t.Tick += T_Tick;
                 t.Start( );
+                Paint += Form1_Paint;
             }
             catch ( Exception ex )
             {
                 MessageBox.Show( ex.ToString( ) );
                 CleanUp( );
+            }
+        }
+
+        private void Form1_Paint( object sender , PaintEventArgs e )
+        {
+            //foreach ( var tagMan in TagClientDic.Values )
+            for ( int i = 0 ; i < TagClientDic.Count ; i++ )
+            {
+                var tagMan = TagClientDic.ElementAt( i ).Value;
+                var listBox = ClientTitleList[ i ];
+                //foreach ( var icon in tagMan.IconList )
+                List<System.Drawing.Icon> iconList = tagMan.IconList;
+                for ( int j = 0 ; j < iconList.Count ; j++ )
+                {
+                    var icon = iconList[ j ];
+                    var size = 12;
+                    var rect = new DrawRectangle( listBox.Left - 16 , listBox.Top + j * size + 2 , size , size );
+                    e.Graphics.DrawIcon( icon , rect );
+                }
             }
         }
 
@@ -301,6 +324,7 @@ namespace TileManTest
                     Attach( ActiveClient , sentDest.ToString( ) );
                     Tile( );
                     ActiveClient = TryGetMaster( );
+                    Invalidate( );
                 }
             }
             else
@@ -324,6 +348,7 @@ namespace TileManTest
 
         private void OtherWindow( System.Windows.Forms.Message m , WM param , Client client )
         {
+            //Trace.WriteLine( client.Title + " " + param )
             switch ( param )
             {
                 case WM.HSHELL_WINDOWCREATED:
@@ -434,7 +459,7 @@ namespace TileManTest
             //label1.Text = SelectedClientList( ).Aggregate( "" , ( acc , c ) => acc + "\n" + c.Title );
             Win32dll.GetWindowThreadProcessId( wnd , out procID );
             //wnd = Win32dll.OpenProcess( Win32dll.ProcessAccessFlags.QueryInformation | Win32dll.ProcessAccessFlags.VMRead | Win32dll.ProcessAccessFlags.Terminate , false , procID );
-            label3.Text = SelectedTag;
+            //label3.Text = SelectedTag;
             //var size = User32Methods.GetWindowTextLength( wnd );
             //if ( size > 0 )
             //{
@@ -457,13 +482,13 @@ namespace TileManTest
 
             CalcSlaveSizeFromMaster( );
 
-            //foreach ( var item in SlaveList() )
-            //{
-            //    if ( item.HasUpdate( ) )
-            //    {
+            foreach ( var item in SlaveList( ) )
+            {
+                if ( item.HasSizeUpdate( ) )
+                {
 
-            //    }
-            //}
+                }
+            }
         }
 
         private void CalcSlaveSizeFromMaster()
@@ -512,6 +537,10 @@ namespace TileManTest
             WindowInfo windowInfo = new WindowInfo();
             User32Methods.GetWindowInfo( hwnd , ref windowInfo );
             var title = ThreadWindowHandles.GetWindowText( hwnd );
+            if ( title == string.Empty )
+            {
+                title = ThreadWindowHandles.GetClassText( hwnd );
+            }
             Client client = Types.createClient(
                 hwnd , ThreadWindowHandles.GetParent( hwnd ) ,
                 ( int )User32Methods.GetWindowThreadProcessId( hwnd , IntPtr.Zero ) ,
@@ -706,17 +735,16 @@ namespace TileManTest
             var masterWidth = MasterFact * winGeom.Width;
 
             bool onlyOne = clientList.Count == 1;
-            float v = ( onlyOne ? winGeom.Width : masterWidth ) - ( 2 * master.Bw );
+            float width = ( onlyOne ? winGeom.Width : masterWidth ) - ( 2 * master.Bw );
             ResizeClient( master , winGeom.Left , winGeom.Top + UIHeight ,
-                ( int )v , winGeom.Height - 2 * master.Bw );
+                ( int )width , winGeom.Height - UIHeight - 2 * master.Bw );
             if ( onlyOne )
             {
                 return;
             }
-            bool winIsLargerThanMaster = winGeom.Left + masterWidth > master.Rect.X + master.Rect.Width;
-            var x = winIsLargerThanMaster ? master.Rect.X + master.Rect.Width + master.Bw * 2 : winGeom.Left + masterWidth;
+            var x = master.Rect.X + master.Rect.Width; 
             int y = winGeom.Top + UIHeight;
-            var w = winIsLargerThanMaster ? winGeom.Left + winGeom.Width - x : winGeom.Width - masterWidth;
+            var w = winGeom.Left + winGeom.Width;
             var h = (WindowGeom.Height - UIHeight) / clientList.Count;
             if ( h < BarHeight )
             {
@@ -730,14 +758,11 @@ namespace TileManTest
                 var item = slaveList[ i ];
                 bool isLastOne = ( i + 1 == slaveCount );
                 var height = isLastOne ? winGeom.Top + winGeom.Height - y - 2 * item.Bw : h - 2 * item.Bw;
-                User32Methods.GetWindowRect( item.Hwnd , out Rectangle winRect );
-                User32Methods.GetClientRect( item.Hwnd , out Rectangle cliRect );
-                ResizeClient( item , ( int )x , y , ( int )w - 2 * item.Bw , height );
+                ResizeClient( item , x , y , w - 2 * item.Bw , height );
+                User32Methods.GetWindowRect( item.Hwnd , out Rectangle rect );
                 if ( !isLastOne )
                 {
                     y = item.Rect.Top + item.Rect.Height;
-                    var title = winRect.Height - cliRect.Height;
-                    y += title;
                 }
             }
         }

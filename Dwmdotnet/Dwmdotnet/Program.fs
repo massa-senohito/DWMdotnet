@@ -161,7 +161,7 @@ namespace DWMDotnet
         if w < barHeight then
           copyW <- barHeight
         let crect = c.Rect
-        if crect.X <> copyX || crect.Y <> copyY || crect.Width <> copyW || crect.Height <> h then
+        if crect.X <> copyX || crect.Y <> copyY || crect.Width <> copyW || crect.Height <> copyH then
           c.Rect <- new Rectangle(copyX , copyY , copyW , copyH )
           ThreadWindowHandles.SetWindowPos( c.Hwnd , nativeint(0) ,
             copyX , copyY , copyW , copyH , SWP.NOACTIVATE ) |> ignore

@@ -15,6 +15,7 @@ using static MouseCaptureTest.Win32dll;
 using static Types;
 using TagType = System.String;
 using DrawRectangle = System.Drawing.Rectangle;
+using System.IO;
 
 namespace TileManTest
 {
@@ -44,6 +45,10 @@ namespace TileManTest
         }
 
         List<ListBox> ClientTitleList;
+        List<DrawRectangle> ScreenRectList = new List<DrawRectangle>( );
+
+        const string SettingPath = "TileSetting.txt";
+        TileSetting _TileSetting ;
 
         void ChangeMaster( Client client )
         {
@@ -58,6 +63,19 @@ namespace TileManTest
 
         public Form1()
         {
+            _TileSetting = TileSetting.Load( SettingPath );
+            var scrList = Screen.AllScreens;
+            int widthSum = 0;
+            foreach ( var item in scrList )
+            {
+                Trace.WriteLine( item.DeviceName + " " + item.Bounds );
+                var rect = item.Bounds;
+                rect.Inflate( widthSum , 0 );
+                ScreenRectList.Add( rect );
+                widthSum += rect.Width;
+                // https://stackoverflow.com/questions/53012896/using-setwindowpos-with-multiple-monitors
+            }
+
             try
             {
                 InitializeComponent( );
@@ -620,14 +638,9 @@ namespace TileManTest
             }
             String value = ThreadWindowHandles.GetWindowText( hwnd );
             String classText = ThreadWindowHandles.GetClassText( hwnd );
-            if ( //value.Contains( "Visual" ) || 
-                value.Contains("Everything"))
+            if ( !_TileSetting.IsTilingTarget( hwnd ) )
             {
                 return false;
-            }
-            if ( value.Contains( "Orchis" ) )
-            {
-                Trace.WriteLine( "" );
             }
             //Trace.WriteLine( value + " : className = " + classText );
             //if ( value.Contains( "Chrome" ) || classText.Contains( "CabinetWClass" ) )
@@ -809,6 +822,7 @@ namespace TileManTest
         {
             CleanUp( );
             Close( );
+            File.WriteAllText( SettingPath , _TileSetting.ToJson( ) );
         }
     }
 }

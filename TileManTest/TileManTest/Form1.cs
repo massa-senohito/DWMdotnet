@@ -36,15 +36,13 @@ namespace TileManTest
         string SelectedTag = "1";
 
         OrderedDictionary<TagType , TagManager> TagClientDic = new OrderedDictionary<TagType, TagManager>( );
-        TagManager UnhandledTag;
 
         List<Client> SelectedClientList()
         {
             return TagClientDic[  SelectedTag ].ClientList;
         }
-
+        List<ScreenWorld> ScreenList = new List<ScreenWorld>( );
         List<ListBox> ClientTitleList;
-        List<DrawRectangle> ScreenRectList = new List<DrawRectangle>( );
 
         const string SettingPath = "TileSetting.txt";
         TileSetting _TileSetting ;
@@ -68,10 +66,7 @@ namespace TileManTest
             foreach ( var item in scrList )
             {
                 Trace.WriteLine( item.DeviceName + " " + item.Bounds );
-                var rect = item.Bounds;
-                rect.Inflate( widthSum , 0 );
-                ScreenRectList.Add( rect );
-                widthSum += rect.Width;
+                ScreenList.Add( new ScreenWorld( item ) );
                 // https://stackoverflow.com/questions/53012896/using-setwindowpos-with-multiple-monitors
             }
 
@@ -190,67 +185,6 @@ namespace TileManTest
         {
             CleanUp( );
 
-        }
-
-        void DrawSquare( bool filled , bool empty , bool invert , RECT rect )
-        {
-            int size = 5;
-            Rectangle extended;// = rect;
-            extended.Left = rect.Left + 1;
-            extended.Top = rect.Top + 1;
-            extended.Right = rect.Right + size;
-            extended.Bottom = rect.Bottom + size;
-
-            var ForeColor = SystemColor.COLOR_SCROLLBAR;
-            var BackColor = SystemColor.COLOR_WINDOW;
-
-            using ( var brushColor = new PenBrush( false , invert ? BackColor : ForeColor ) )
-            {
-                var brush = brushColor.BrushPtr;
-                ThreadWindowHandles.SelectObject( Handle , brush );
-                if ( filled )
-                {
-                    User32Methods.FillRect( Handle , ref extended , brush );
-                }
-                else if ( empty )
-                {
-                    User32Methods.FillRect( Handle , ref extended , brush );
-                }
-                ThreadWindowHandles.DeleteObject( brush );
-            }
-        }
-
-        int borderPx = 2;
-        int Transparent = 1;
-
-        void DrawText( string text , bool invert , RECT rect)
-        {
-            Rectangle extended;
-            extended.Left = rect.Left;
-            extended.Top = rect.Top;
-            extended.Right = rect.Right + rect.Width;
-            extended.Bottom = rect.Bottom + rect.Height;
-
-            var ForeColor = SystemColor.COLOR_SCROLLBAR;
-            var BackColor = SystemColor.COLOR_WINDOW;
-
-            var brush = invert ? BackColor : ForeColor;
-            using ( var brushColor = new PenBrush( true , invert ? BackColor : ForeColor ) )
-            {
-                using ( var pen = new PenBrush( false , brush ) )
-                {
-                    ThreadWindowHandles.SelectObject( Handle , pen.BrushPtr );
-                    ThreadWindowHandles.SelectObject( Handle , brushColor.BrushPtr );
-                    User32Methods.FillRect( Handle , ref extended , brushColor.BrushPtr );
-                }
-            }
-
-            Gdi32Methods.SetBkMode( Handle , Transparent );
-            ThreadWindowHandles.SetTextColor( Handle , PenBrush.Color2Int( brush ) );
-            var font = Gdi32Helpers.GetStockObject( StockObject.SYSTEM_FONT );
-            ThreadWindowHandles.SelectObject( Handle , font );
-            User32Helpers.DrawText( Handle , text , -1 , ref extended ,
-                DrawTextFormatFlags.DT_CENTER | DrawTextFormatFlags.DT_VCENTER | DrawTextFormatFlags.DT_SINGLELINE );
         }
 
         void SetSelected( Client client )
@@ -632,6 +566,17 @@ namespace TileManTest
 
         }
 
+        void AddUnhandle( IntPtr hwnd )
+        {
+            foreach ( var item in ScreenList )
+            {
+                if ( item.IsContainScreen( hwnd ) )
+                {
+                    item.AddUnhandledClient( CreateClient( hwnd ) );
+                }
+            }
+        }
+
         bool IsManageable( IntPtr hwnd )
         {
             if ( ContainClient( hwnd ) )
@@ -682,7 +627,7 @@ namespace TileManTest
             var winIsVisibleAndNoParent = !hasParent && User32Methods.IsWindowVisible( hwnd );
             if ( winIsVisibleAndNoParent || isParentOK )
             {
-                if ( ( !isTool && !hasParent ) || ( isTool && isParentOK ) )
+                if ( ( !isTool && !hasParent ) || ( isTool && isParentOK ) || (isApp && hasParent))
                 {
                     if ( value != null )
                     {
@@ -690,15 +635,10 @@ namespace TileManTest
                         Trace.Write( value );
                         Trace.WriteLine( " isTool : " + isTool + " isApp : " + isApp + " style : " + style );
                     }
-                    return true;
-                }
-                if ( isApp && hasParent )
-                {
-                    if ( value != null )
+                    if ( isBlackListName )
                     {
-
-                        Trace.Write( value );
-                        Trace.WriteLine( " isTool : " + isTool + " isApp : " + isApp + " style : " + style );
+                        AddUnhandle( hwnd );
+                        return false;
                     }
                     return true;
                 }
@@ -812,8 +752,6 @@ namespace TileManTest
 
         void UpdateBar()
         {
-            // SetWindowPos(barhwnd, showbar ? HWND_TOPMOST : HWND_NOTOPMOST, 0, by, ww, bh, (showbar ? SWP_SHOWWINDOW : SWP_HIDEWINDOW) | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
-            //ThreadWindowHandles.SetWindowPos(Handle, HWND_TOPMOST , 0, 0, 1024, 20, SWP_SHOWWINDOW  | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
             User32Helpers.SetWindowPos( Handle , HwndZOrder.HWND_TOPMOST 
                 , 0 , BarY , WindowGeom.Width , BarHeight ,
                 WindowPositionFlags.SWP_SHOWWINDOW | WindowPositionFlags.SWP_NOACTIVATE | WindowPositionFlags.SWP_NOSENDCHANGING );

@@ -18,10 +18,13 @@ namespace TileManTest
         public bool IsTilingTarget( IntPtr hwnd )
         {
             var title = ThreadWindowHandles.GetWindowText( hwnd );
+            String classText = ThreadWindowHandles.GetClassText( hwnd );
             // 一部分で
             foreach ( var item in NoTilingList )
             {
-                if ( title.Contains( item ) )
+                bool titleCont = title.Contains( item );
+                bool classCont = classText.Contains( item );
+                if ( titleCont || classCont )
                 {
                     return false;
                 }

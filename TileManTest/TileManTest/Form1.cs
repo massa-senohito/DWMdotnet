@@ -1,4 +1,5 @@
-﻿using DWMDotnet;
+﻿//#define USESCREENWORLD
+using DWMDotnet;
 using Handles;
 using MouseCaptureTest;
 using NetCoreEx.Geometry;
@@ -21,7 +22,7 @@ namespace TileManTest
 {
     public partial class Form1 : Form
     {
-        Timer t;
+        Timer UpdateTimer;
         uint ShellHookID;
         private List<HotKey> HotkeyList = new List<HotKey>( );
         RECT ScreenGeom;
@@ -35,12 +36,16 @@ namespace TileManTest
         float MasterFact = 0.55f;
         string SelectedTag = "1";
 
+#if USESCREENWORLD
+#endif
         OrderedDictionary<TagType , TagManager> TagClientDic = new OrderedDictionary<TagType, TagManager>( );
 
         List<Client> SelectedClientList()
         {
-            return TagClientDic[  SelectedTag ].ClientList;
+            return TagClientDic[ SelectedTag ].ClientList;
+            //return ScreenList[0].ClientList( SelectedTag ]);
         }
+
         List<ScreenWorld> ScreenList = new List<ScreenWorld>( );
         List<ListBox> ClientTitleList;
 
@@ -98,6 +103,7 @@ namespace TileManTest
                     HotkeyList.Add( hotkeySend );
                     var temp = new TagManager( new List<Client>() , i );
                     TagClientDic.Add( i.ToString() , temp );
+                    //ScreenList[0].AddTag( i , temp );
                     ClientTitleList[ i - 1 ].Click += Form1_SelectedIndexChanged;
                 }
                 SetUp( );
@@ -109,10 +115,10 @@ namespace TileManTest
                 Tile( );
                 Bounds = WindowGeom.Rect;
                 Height = UIHeight;
-                t = new Timer( );
-                t.Interval = 10;
-                t.Tick += T_Tick;
-                t.Start( );
+                UpdateTimer = new Timer( );
+                UpdateTimer.Interval = 10;
+                UpdateTimer.Tick += T_Tick;
+                UpdateTimer.Start( );
                 Paint += Form1_Paint;
             }
             catch ( Exception ex )
@@ -147,6 +153,7 @@ namespace TileManTest
                     }
                 }
             }
+            // ScreenList[ 0 ].PaintIcon( e );
         }
 
         private void Form1_SelectedIndexChanged( object sender , EventArgs e )

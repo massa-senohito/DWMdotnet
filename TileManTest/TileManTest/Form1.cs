@@ -28,16 +28,15 @@ namespace TileManTest
         RECT WindowGeom;
         int BarHeight;
         int BarY;
-        bool ShowBar = true;
         bool TopBar = true;
         bool IsDirty = false;
-        int Blw = 33;
         int UIHeight = 118;
 
         float MasterFact = 0.55f;
         string SelectedTag = "1";
-        //Ordered
+
         OrderedDictionary<TagType , TagManager> TagClientDic = new OrderedDictionary<TagType, TagManager>( );
+        TagManager UnhandledTag;
 
         List<Client> SelectedClientList()
         {
@@ -142,7 +141,15 @@ namespace TileManTest
                     var icon = iconList[ j ];
                     var size = 12;
                     var rect = new DrawRectangle( listBox.Left - 16 , listBox.Top + j * size + 2 , size , size );
-                    e.Graphics.DrawIcon( icon , rect );
+                    if ( icon != null )
+                    {
+                        // なんかnullでくることがあった
+                        e.Graphics.DrawIcon( icon , rect );
+                    }
+                    else
+                    {
+                        tagMan.RemoveIcon( j );
+                    }
                 }
             }
         }
@@ -246,10 +253,6 @@ namespace TileManTest
                 DrawTextFormatFlags.DT_CENTER | DrawTextFormatFlags.DT_VCENTER | DrawTextFormatFlags.DT_SINGLELINE );
         }
 
-        void ApplyRules( Types.Client client )
-        {
-        }
-
         void SetSelected( Client client )
         {
             // drawborder何もしてない
@@ -338,11 +341,10 @@ namespace TileManTest
                 {
                     IsDirty = true;
                     DWM.setClientVisibility( ActiveClient , false );
-                    currentTag.Remove( ActiveClient );
+                    currentTag.RemoveClient( ActiveClient );
                     Attach( ActiveClient , sentDest.ToString( ) );
                     Tile( );
                     ActiveClient = TryGetMaster( );
-                    Invalidate( );
                 }
             }
             else
@@ -435,7 +437,6 @@ namespace TileManTest
             int wy = ScreenGeom.Top;
             int wh = ScreenGeom.Height;
             BarY = -BarHeight;
-            if ( ShowBar )
             {
                 if ( TopBar )
                 {
@@ -495,6 +496,7 @@ namespace TileManTest
                     ClientTitleList[ tagMan.Id - 1 ].Items.Clear( );
                     ClientTitleList[ tagMan.Id - 1 ].Items.AddRange( tagMan.ClientTitles.ToArray( ) );
                 }
+                Invalidate( );
                 IsDirty = false;
             }
 
@@ -531,7 +533,7 @@ namespace TileManTest
         {
             foreach ( var item in TagClientDic.Values )
             {
-                var foundItem = item.GetClient( hwnd );
+                var foundItem = item.TryGetClient( hwnd );
                 if ( foundItem != null )
                 {
                     return foundItem;
@@ -552,8 +554,28 @@ namespace TileManTest
             {
                 return GetClient( hwnd );
             }
-            WindowInfo windowInfo = new WindowInfo();
+            WindowInfo windowInfo = new WindowInfo( );
             User32Methods.GetWindowInfo( hwnd , ref windowInfo );
+            Client client = CreateClient( hwnd );
+
+            WindowPlacement windowPlacement = new WindowPlacement( );
+            if ( ThreadWindowHandles.IsWindowVisible( client.Hwnd ) > 0 )
+            {
+                User32Methods.SetWindowPlacement( hwnd , ref windowPlacement );
+            }
+
+            if ( ThreadWindowHandles.IsWindowVisible( hwnd ) > 0 )
+            {
+                NetCoreEx.Geometry.Rectangle windowRect = windowInfo.WindowRect;
+                DWM.resize( client , windowRect.Left , windowRect.Top , windowRect.Width , windowRect.Height , WindowGeom.Rect );
+            }
+
+            Attach( client , SelectedTag );
+            return client;
+        }
+
+        private static Client CreateClient( IntPtr hwnd )
+        {
             var title = ThreadWindowHandles.GetWindowText( hwnd );
             if ( title == string.Empty )
             {
@@ -563,28 +585,12 @@ namespace TileManTest
                 hwnd , ThreadWindowHandles.GetParent( hwnd ) ,
                 ( int )User32Methods.GetWindowThreadProcessId( hwnd , IntPtr.Zero ) ,
                  WindowStyle( hwnd ) , title );
-
-            WindowPlacement windowPlacement = new WindowPlacement();
-            if ( ThreadWindowHandles.IsWindowVisible( client.Hwnd ) > 0 )
-            {
-                User32Methods.SetWindowPlacement( hwnd , ref windowPlacement );
-            }
-            // isfloat
-            ApplyRules( client );
-
-            if ( ThreadWindowHandles.IsWindowVisible( hwnd ) > 0 )
-            {
-                NetCoreEx.Geometry.Rectangle windowRect = windowInfo.WindowRect;
-                DWM.resize( client , windowRect.Left , windowRect.Top , windowRect.Width , windowRect.Height , WindowGeom.Rect );
-            }
-
-            Attach( client , SelectedTag);
             return client;
         }
 
         private void Attach( Client client , string dest )
         {
-            TagClientDic[ dest ].Add( client );
+            TagClientDic[ dest ].AddClient( client );
             IsDirty = true;
         }
 
@@ -638,9 +644,10 @@ namespace TileManTest
             }
             String value = ThreadWindowHandles.GetWindowText( hwnd );
             String classText = ThreadWindowHandles.GetClassText( hwnd );
+            bool isBlackListName = false;
             if ( !_TileSetting.IsTilingTarget( hwnd ) )
             {
-                return false;
+                isBlackListName = true;
             }
             //Trace.WriteLine( value + " : className = " + classText );
             //if ( value.Contains( "Chrome" ) || classText.Contains( "CabinetWClass" ) )
@@ -661,13 +668,7 @@ namespace TileManTest
                 // なんか見えないウィンドウをmanageするので
                 //Manage( hwnd );
             }
-            /* XXX: should we do this? */
-            //if ( GetWindowTextLength( hwnd ) == 0 )
-            //{
-            //    debug( "   title: NULL\n" );
-            //    debug( "  manage: false\n" );
-            //    return false;
-            //}
+
             if ( ( style & WindowStyles.WS_DISABLED ) != 0 )
             {
                 return false;
@@ -757,7 +758,7 @@ namespace TileManTest
             }
             var x = master.Rect.X + master.Rect.Width; 
             int y = winGeom.Top + UIHeight;
-            var w = winGeom.Left + winGeom.Width;
+            var w = winGeom.Left + winGeom.Width - ( int )width;
             var h = (WindowGeom.Height - UIHeight) / clientList.Count;
             if ( h < BarHeight )
             {
@@ -775,7 +776,7 @@ namespace TileManTest
                 User32Methods.GetWindowRect( item.Hwnd , out Rectangle rect );
                 if ( !isLastOne )
                 {
-                    y = item.Rect.Top + item.Rect.Height;
+                    y = item.Rect.Top + rect.Height;
                 }
             }
         }
@@ -800,7 +801,7 @@ namespace TileManTest
         {
             foreach ( var item in TagClientDic.Values )
             {
-                var contains = item.Remove(client);
+                var contains = item.RemoveClient(client);
                 if ( contains  )
                 {
                     IsDirty = true;

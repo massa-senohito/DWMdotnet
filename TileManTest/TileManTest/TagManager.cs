@@ -55,7 +55,7 @@ namespace TileManTest
             ClientsAreVisible = visible;
         }
 
-        public Client GetClient( IntPtr hwnd )
+        public Client TryGetClient( IntPtr hwnd )
         {
             var foundItem = ClientList.FirstOrDefault( c => c.Hwnd == hwnd );
             if ( foundItem != null )
@@ -65,7 +65,7 @@ namespace TileManTest
             return null;
         }
 
-        public void Add( Client c )
+        public void AddClient( Client c )
         {
             ClientList.Add( c );
             Icon item = Win32dll.GetAppIcon( c.Hwnd );
@@ -77,21 +77,24 @@ namespace TileManTest
             return ClientList.Any( c => c.Hwnd == hwnd );
         }
 
-        public bool Remove( Client client )
+        public bool RemoveClient( Client client )
         {
             var mayInd = ClientList.FindIndex( c => c.Hwnd == client.Hwnd );
             if ( mayInd != -1 )
             {
                 ClientList.RemoveAt( mayInd );
                 var icon = IconList[ mayInd ];
-                IconList.RemoveAt( mayInd );
+                RemoveIcon( mayInd );
                 icon?.Dispose( );
                 return true;
             }
             return false;
         }
 
-
+        public void RemoveIcon( int ind )
+        {
+            IconList.RemoveAt( ind );
+        }
 
         public IEnumerable<string> ClientTitles
         {

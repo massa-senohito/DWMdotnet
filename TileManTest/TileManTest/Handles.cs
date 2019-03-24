@@ -1,4 +1,5 @@
-﻿using System;
+﻿// こちらは消す
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Runtime.InteropServices;
@@ -148,7 +149,7 @@ namespace Handles
 
 
         [DllImport( "User32.dll" )]
-        static extern int SetForegroundWindow(
+        public static extern int SetForegroundWindow(
               IntPtr hWnd
               );
 
@@ -302,7 +303,7 @@ public static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int 
         //            int nCmdShow   // 表示状態
         //            );
         [Flags]
-        enum SW
+        public enum SW
         {
 
             SW_HIDE = 0,
@@ -322,9 +323,9 @@ public static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int 
             SW_MAX = 11,
         }
         [DllImport( "User32.Dll" )]
-        static extern int ShowWindow(
+        public static extern int ShowWindow(
             IntPtr hWnd ,
-            int nCmdShow
+            SW nCmdShow
             );
 
         uint threadId;
@@ -333,9 +334,10 @@ public static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int 
         static extern bool GetTextExtentPoint32( IntPtr hdc , string lpString ,
            int cbString , out Size lpSize );
 
-        public static int GetTextExtentWidth( IntPtr hdc , string lpString , int cbString )
+        public static int GetTextExtentWidth( IntPtr hdc , string lpString )
         {
             Size size = new Size( );
+            int cbString = lpString.Length;
             GetTextExtentPoint32( hdc , lpString , cbString , out size );
             return size.Width;
         }

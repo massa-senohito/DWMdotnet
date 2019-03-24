@@ -139,8 +139,9 @@ namespace MouseCaptureTest
                 iconHandle = SendMessage( hwnd , WM_GETICON , ICON_SMALL , 0 );
             if ( iconHandle == IntPtr.Zero )
                 iconHandle = SendMessage( hwnd , WM_GETICON , ICON_BIG , 0 );
-            if ( iconHandle == IntPtr.Zero )
-                iconHandle = GetClassLongPtr( hwnd , GCL_HICON );
+            // -14だめっぽい
+            //if ( iconHandle == IntPtr.Zero )
+            //    iconHandle = GetClassLongPtr( hwnd , GCL_HICON );
             if ( iconHandle == IntPtr.Zero )
                 iconHandle = GetClassLongPtr( hwnd , GCL_HICONSM );
 

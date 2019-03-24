@@ -38,12 +38,12 @@ namespace TileManTest
 
 #if USESCREENWORLD
 #endif
-        OrderedDictionary<TagType , TagManager> TagClientDic = new OrderedDictionary<TagType, TagManager>( );
+        //OrderedDictionary<TagType , TagManager> TagClientDic = new OrderedDictionary<TagType, TagManager>( );
 
         List<Client> SelectedClientList()
         {
-            return TagClientDic[ SelectedTag ].ClientList;
-            //return ScreenList[0].ClientList( SelectedTag ]);
+            //return TagClientDic[ SelectedTag ].ClientList;
+            return ScreenList[0].ClientList( SelectedTag );
         }
 
         List<ScreenWorld> ScreenList = new List<ScreenWorld>( );
@@ -102,8 +102,8 @@ namespace TileManTest
                     HotkeyList.Add( hotkeyNotify );
                     HotkeyList.Add( hotkeySend );
                     var temp = new TagManager( new List<Client>() , i );
-                    TagClientDic.Add( i.ToString() , temp );
-                    //ScreenList[0].AddTag( i , temp );
+                    //TagClientDic.Add( i.ToString() , temp );
+                    ScreenList[0].AddTag( i , temp );
                     ClientTitleList[ i - 1 ].Click += Form1_SelectedIndexChanged;
                 }
                 SetUp( );
@@ -130,37 +130,37 @@ namespace TileManTest
 
         private void Form1_Paint( object sender , PaintEventArgs e )
         {
-            //foreach ( var tagMan in TagClientDic.Values )
-            for ( int i = 0 ; i < TagClientDic.Count ; i++ )
-            {
-                var tagMan = TagClientDic.ElementAt( i ).Value;
-                var listBox = ClientTitleList[ i ];
-                //foreach ( var icon in tagMan.IconList )
-                List<System.Drawing.Icon> iconList = tagMan.IconList;
-                for ( int j = 0 ; j < iconList.Count ; j++ )
-                {
-                    var icon = iconList[ j ];
-                    var size = 12;
-                    var rect = new DrawRectangle( listBox.Left - 16 , listBox.Top + j * size + 2 , size , size );
-                    if ( icon != null )
-                    {
-                        // なんかnullでくることがあった
-                        e.Graphics.DrawIcon( icon , rect );
-                    }
-                    else
-                    {
-                        tagMan.RemoveIcon( j );
-                    }
-                }
-            }
-            // ScreenList[ 0 ].PaintIcon( e );
+            //for ( int i = 0 ; i < TagClientDic.Count ; i++ )
+            //{
+            //    var tagMan = TagClientDic.ElementAt( i ).Value;
+            //    var listBox = ClientTitleList[ i ];
+            //    //foreach ( var icon in tagMan.IconList )
+            //    List<System.Drawing.Icon> iconList = tagMan.IconList;
+            //    for ( int j = 0 ; j < iconList.Count ; j++ )
+            //    {
+            //        var icon = iconList[ j ];
+            //        var size = 12;
+            //        var rect = new DrawRectangle( listBox.Left - 16 , listBox.Top + j * size + 2 , size , size );
+            //        if ( icon != null )
+            //        {
+            //            // なんかnullでくることがあった
+            //            e.Graphics.DrawIcon( icon , rect );
+            //        }
+            //        else
+            //        {
+            //            tagMan.RemoveIcon( j );
+            //        }
+            //    }
+            //}
+            ScreenList[ 0 ].PaintIcon( ClientTitleList , e );
         }
 
         private void Form1_SelectedIndexChanged( object sender , EventArgs e )
         {
             var listBox = sender as ListBox;
             var newTag  = listBox.Name.Last( ).ToString();
-            ChangeTag( TagClientDic[ SelectedTag.ToString( ) ] , newTag );
+            //ChangeTag( TagClientDic[ SelectedTag.ToString( ) ] , newTag );
+            ChangeTag( ScreenList[0].Tag( SelectedTag.ToString( ) ) , newTag );
             SelectedTag = newTag;
             int selectedInd = listBox.SelectedIndex;
             //label3.Text = listBox.Name + " " + selectedInd.ToString();
@@ -174,7 +174,8 @@ namespace TileManTest
         private void CleanUp()
         {
             int y = 0;
-            foreach ( var tagMan in TagClientDic.Values )
+            //foreach ( var tagMan in TagClientDic.Values )
+            foreach ( var tagMan in ScreenList[0].TagList )
             {
                 foreach ( var client in tagMan.ClientList )
                 {
@@ -182,6 +183,7 @@ namespace TileManTest
                     User32Methods.MoveWindow( client.Hwnd , 0 , y , WindowGeom.Width , 480 , true );
                 }
             }
+            // ScreenList[0].CleanUp();
             foreach ( var hotkey in HotkeyList )
             {
                 hotkey.Unregister( );
@@ -268,7 +270,9 @@ namespace TileManTest
         private void TagSignal( HotKey item )
         {
             bool send = 9 < item.ID;
-            TagManager currentTag = TagClientDic[ SelectedTag.ToString() ];
+            TagManager currentTag =
+                //TagClientDic[ SelectedTag.ToString() ];
+                ScreenList[ 0 ].Tag( SelectedTag );
             string itemID = item.ID.ToString( );
             int sentDest = item.ID - 10;
             // 同じタグなら再度入らないように
@@ -301,8 +305,10 @@ namespace TileManTest
                 return;
             }
             ActiveClient = null;
-            currentTag.Visible( false );
-            TagClientDic[ itemID ].Visible( true );
+            ScreenList[ 0 ].ChangeTag( currentTag , itemID );
+            ScreenList[ 0 ].SetAllWindowFore( );
+            //currentTag.Visible( false );
+            //TagClientDic[ itemID ].Visible( true );
             SelectedTag = itemID;
             Tile( );
         }
@@ -393,10 +399,21 @@ namespace TileManTest
             WindowGeom = new RECT( ScreenGeom );
         }
 
+        bool HasUpdateClientTitle( Client client )
+        {
+            if ( client.HasTitleUpdate( ) )
+            {
+                IsDirty = true;
+                return true;
+            }
+            return false;
+        }
+
         private void UpdateClient()
         {
             var bui = new StringBuilder( );
-            foreach ( var tagMan in TagClientDic.Values )
+            //foreach ( var tagMan in TagClientDic.Values )
+            foreach ( var tagMan in ScreenList[0].TagList )
             {
                 foreach ( var client in tagMan.ClientList )
                 {
@@ -408,7 +425,14 @@ namespace TileManTest
                     }
                 }
             }
+            // ScreenList[ 0 ].ForeachClient( HasUpdateClientTitle );
             //label3.Text = bui.ToString( );
+        }
+
+        void UpdateTitle( TagManager tagMan )
+        {
+            ClientTitleList[ tagMan.Id - 1 ].Items.Clear( );
+            ClientTitleList[ tagMan.Id - 1 ].Items.AddRange( tagMan.ClientTitles.ToArray( ) );
         }
 
         private void T_Tick( object sender , EventArgs e )
@@ -432,10 +456,10 @@ namespace TileManTest
 
             if ( IsDirty )
             {
-                foreach ( var tagMan in TagClientDic.Values )
+                //foreach ( var tagMan in TagClientDic.Values )
+                foreach ( var tagMan in ScreenList[0].TagList )
                 {
-                    ClientTitleList[ tagMan.Id - 1 ].Items.Clear( );
-                    ClientTitleList[ tagMan.Id - 1 ].Items.AddRange( tagMan.ClientTitles.ToArray( ) );
+                    UpdateTitle( tagMan );
                 }
                 Invalidate( );
                 IsDirty = false;
@@ -472,9 +496,10 @@ namespace TileManTest
 
         Client GetClient( IntPtr hwnd )
         {
-            foreach ( var item in TagClientDic.Values )
+            //foreach ( var item in TagClientDic.Values )
+            foreach ( var tagMan in ScreenList[0].TagList )
             {
-                var foundItem = item.TryGetClient( hwnd );
+                var foundItem = tagMan.TryGetClient( hwnd );
                 if ( foundItem != null )
                 {
                     return foundItem;
@@ -531,7 +556,8 @@ namespace TileManTest
 
         private void Attach( Client client , string dest )
         {
-            TagClientDic[ dest ].AddClient( client );
+            //TagClientDic[ dest ].AddClient( client );
+            ScreenList[ 0 ].Attach( client , dest );
             IsDirty = true;
         }
 
@@ -540,6 +566,8 @@ namespace TileManTest
             if ( IsManageable( hwnd ) )
             {
                 Manage( hwnd );
+                // chrome、最小化してるウィンドウがマスターだとサイズが0のように処理される
+                ThreadWindowHandles.ShowWindow( hwnd , ThreadWindowHandles.SW.SW_RESTORE );
             }
             return true;
         }
@@ -601,12 +629,12 @@ namespace TileManTest
             {
                 isBlackListName = true;
             }
-            //Trace.WriteLine( value + " : className = " + classText );
-            //if ( value.Contains( "Chrome" ) || classText.Contains( "CabinetWClass" ) )
-            //{
-            //    DWM.setVisibility( hwnd , true );
-            //    return true;
-            //}
+            Trace.WriteLine( value + " : className = " + classText );
+            if ( value.Contains( "Chrome" ) || classText.Contains( "CabinetWClass" ) )
+            {
+                DWM.setVisibility( hwnd , true );
+                return true;
+            }
             var parent = ThreadWindowHandles.GetParent( hwnd );
             var owner = User32Helpers.GetWindow( hwnd , GetWindowFlag.GW_OWNER );
             WindowStyles style = WindowStyle( hwnd );
@@ -660,9 +688,10 @@ namespace TileManTest
 
         private bool ContainClient( IntPtr hwnd )
         {
-            foreach ( var item in TagClientDic.Values )
+            //foreach ( var item in TagClientDic.Values )
+            foreach ( var tagMan in ScreenList[0].TagList )
             {
-                bool contains = item.HasClient( hwnd );
+                bool contains = tagMan.HasClient( hwnd );
                 if ( contains )
                 {
                     return true;
@@ -746,9 +775,10 @@ namespace TileManTest
 
         private void Detach( Client client )
         {
-            foreach ( var item in TagClientDic.Values )
+            //foreach ( var item in TagClientDic.Values )
+            foreach ( var tagMan in ScreenList[0].TagList )
             {
-                var contains = item.RemoveClient(client);
+                var contains = tagMan.RemoveClient(client);
                 if ( contains  )
                 {
                     IsDirty = true;

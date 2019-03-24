@@ -1,4 +1,6 @@
-﻿using System;
+﻿using DWMDotnet;
+using Handles;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -6,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Whitebell.Library.Collections.Generic;
+using WinApi.User32;
 using static Types;
 using TagType = System.String;
 
@@ -72,17 +75,86 @@ namespace TileManTest
             }
         }
 
+        public TagManager Tag( string id )
+        {
+            return TagClientDic[ id ];
+        }
+
         public void ChangeTag( TagManager currentTag , string itemID )
         {
             //if ( itemID == SelectedTag )
             //{
-            //    return;
+            //    return false;
             //}
             //ActiveClient = null;
-            //currentTag.Visible( false );
-            //TagClientDic[ itemID ].Visible( true );
+            currentTag.Visible( false );
+            TagClientDic[ itemID ].Visible( true );
             //SelectedTag = itemID;
             //Tile( );
         }
+
+        public void ChangeTag( string currentTag , string itemID )
+        {
+            ChangeTag( Tag( currentTag ) , itemID );
+        }
+
+        private void CleanUp()
+        {
+            int y = 0;
+            foreach ( var tagMan in TagClientDic.Values )
+            {
+                foreach ( var client in tagMan.ClientList )
+                {
+                    DWM.setClientVisibility( client , true );
+                    User32Methods.MoveWindow( client.Hwnd , 0 , y , 640 , 480 , true );
+                }
+            }
+        }
+
+        public void ForeachClient( Predicate<Client> action )
+        {
+            foreach ( var tagMan in TagClientDic.Values )
+            {
+                foreach ( var client in tagMan.ClientList )
+                {
+                    if ( action( client ) )
+                    {
+                        return;
+                    }
+                }
+            }
+
+        }
+
+        public void SetAllWindowFore()
+        {
+            ForeachClient( c =>
+             {
+                 ThreadWindowHandles.SetForegroundWindow( c.Hwnd );
+                 return false;
+             } );
+        }
+
+        public void ForeachTagManager(Action<TagManager> action)
+        {
+            foreach ( var tagMan in TagClientDic.Values )
+            {
+                action( tagMan );
+            }
+        }
+
+        public IEnumerable<TagManager> TagList
+        {
+            get
+            {
+                return TagClientDic.Values;
+            }
+        }
+
+        public void Attach( Client client , string dest )
+        {
+            TagClientDic[ dest ].AddClient( client );
+        }
+
     }
 }

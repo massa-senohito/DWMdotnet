@@ -140,13 +140,13 @@ namespace MouseCaptureTest
             if ( iconHandle == IntPtr.Zero )
                 iconHandle = SendMessage( hwnd , WM_GETICON , ICON_BIG , 0 );
             // -14だめっぽい
-            //if ( iconHandle == IntPtr.Zero )
-            //    iconHandle = GetClassLongPtr( hwnd , GCL_HICON );
+            if ( iconHandle == IntPtr.Zero )
+                iconHandle = GetClassLongPtr( hwnd , GCL_HICON );
             if ( iconHandle == IntPtr.Zero )
                 iconHandle = GetClassLongPtr( hwnd , GCL_HICONSM );
 
             if ( iconHandle == IntPtr.Zero )
-                return null;
+                return SystemIcons.Information;
 
             Icon icn = Icon.FromHandle( iconHandle );
             return icn;

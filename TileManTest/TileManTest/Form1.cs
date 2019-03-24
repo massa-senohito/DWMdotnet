@@ -1,5 +1,5 @@
 ﻿//#define USESCREENWORLD
-#define RECOVER
+//#define RECOVER
 using DWMDotnet;
 using Handles;
 using MouseCaptureTest;
@@ -43,9 +43,16 @@ namespace TileManTest
             List<Client> tmp = new List<Client>( );
             foreach ( var screen in ScreenList )
             {
-                tmp.AddRange( screen.ClientList( SelectedTag ) );
+
+                IEnumerable<Client> collection = screen.ClientList( SelectedTag );
+                tmp.AddRange( collection );
             }
             return tmp;
+        }
+
+        List<Client> SelectedTiledClient()
+        {
+            return SelectedClientList( ).Where( c => c.TileMode == TileMode.Tile ).ToList();
         }
 
         List<ScreenWorld> ScreenList = new List<ScreenWorld>( );
@@ -294,9 +301,10 @@ namespace TileManTest
             switch ( param )
             {
                 case WM.HSHELL_WINDOWCREATED:
-                    if ( IsManageable( m.LParam ) )
+                    TileMode tileMode = IsManageable( m.LParam );
+                    if ( tileMode == TileMode.Tile )
                     {
-                        var newClient = Manage( m.LParam );
+                        var newClient = Manage( m.LParam , tileMode );
                         // とりあえず子ウィンドウはスルー
                         Tile( );
                     }
@@ -483,7 +491,7 @@ namespace TileManTest
             return null;
         }
 
-        Client Manage( IntPtr hwnd )
+        Client Manage( IntPtr hwnd , TileMode tileMode )
         {
             //StringBuilder value = ThreadWindowHandles.GetWindowText( hwnd );
             //if ( value != null )
@@ -498,18 +506,22 @@ namespace TileManTest
             WindowInfo windowInfo = new WindowInfo( );
             User32Methods.GetWindowInfo( hwnd , ref windowInfo );
             Client client = CreateClient( hwnd );
-
-            WindowPlacement windowPlacement = new WindowPlacement( );
-            if ( ThreadWindowHandles.IsWindowVisible( client.Hwnd ) > 0 )
+            if ( tileMode == TileMode.Tile )
             {
-                User32Methods.SetWindowPlacement( hwnd , ref windowPlacement );
-            }
 
-            if ( ThreadWindowHandles.IsWindowVisible( hwnd ) > 0 )
-            {
-                NetCoreEx.Geometry.Rectangle windowRect = windowInfo.WindowRect;
-                DWM.resize( client , windowRect.Left , windowRect.Top , windowRect.Width , windowRect.Height , WindowGeom.Rect );
+                WindowPlacement windowPlacement = new WindowPlacement( );
+                if ( ThreadWindowHandles.IsWindowVisible( client.Hwnd ) > 0 )
+                {
+                    User32Methods.SetWindowPlacement( hwnd , ref windowPlacement );
+                }
+
+                if ( ThreadWindowHandles.IsWindowVisible( hwnd ) > 0 )
+                {
+                    NetCoreEx.Geometry.Rectangle windowRect = windowInfo.WindowRect;
+                    DWM.resize( client , windowRect.Left , windowRect.Top , windowRect.Width , windowRect.Height , WindowGeom.Rect );
+                }
             }
+            client.TileMode = tileMode;
 
             Attach( client , SelectedTag );
             return client;
@@ -538,9 +550,10 @@ namespace TileManTest
 
         bool Scan( IntPtr hwnd , IntPtr lParam )
         {
-            if ( IsManageable( hwnd ) )
+            TileMode tileMode = IsManageable( hwnd );
+            if ( tileMode != TileMode.NoHandle )
             {
-                Manage( hwnd );
+                Manage( hwnd , tileMode);
                 // chrome、最小化してるウィンドウがマスターだとサイズが0のように処理される
                 ThreadWindowHandles.ShowWindow( hwnd , ThreadWindowHandles.SW.SW_RESTORE );
             }
@@ -576,26 +589,15 @@ namespace TileManTest
 
         }
 
-        void AddUnhandle( IntPtr hwnd , TagType tag)
-        {
-            foreach ( var item in ScreenList )
-            {
-                if ( item.IsContainScreen( hwnd ) )
-                {
-                    item.AddUnhandledClient( CreateClient( hwnd ) , tag );
-                }
-            }
-        }
-
-        bool IsManageable( IntPtr hwnd )
+        TileMode IsManageable( IntPtr hwnd )
         {
             if ( ContainClient( hwnd ) )
             {
-                return false;
+                return TileMode.NoHandle;
             }
             if ( hwnd == Handle )
             {
-                return false;
+                return TileMode.NoHandle;
             }
             String value = ThreadWindowHandles.GetWindowText( hwnd );
             String classText = ThreadWindowHandles.GetClassText( hwnd );
@@ -606,10 +608,13 @@ namespace TileManTest
             }
             Trace.WriteLine( value + " : className = " + classText );
 #if RECOVER
-            if ( value.Contains( "Chrome" ) || classText.Contains( "CabinetWClass" ) )
+            if ( 
+                value.Contains( "Chrome" ) ||
+                value.Contains( "Avast Secure"  ) ||
+                classText.Contains( "CabinetWClass" ) )
             {
                 DWM.setVisibility( hwnd , true );
-                return true;
+                return TileMode.Tile;
             }
 #endif
             var parent = ThreadWindowHandles.GetParent( hwnd );
@@ -617,7 +622,7 @@ namespace TileManTest
             WindowStyles style = WindowStyle( hwnd );
             //tosafeがほしいけど別ライブラリ内
             var exStyle = ( WindowExStyles )( User32Helpers.GetWindowLongPtr( hwnd , WindowLongFlags.GWL_EXSTYLE ).ToInt32( ) );
-            bool isParentOK = parent != IntPtr.Zero && IsManageable( parent );
+            bool isParentOK = parent != IntPtr.Zero && IsManageable( parent ) == TileMode.Tile;
             bool isTool = ( exStyle & WindowExStyles.WS_EX_TOOLWINDOW ) != 0;
             bool isApp = ( exStyle & WindowExStyles.WS_EX_APPWINDOW ) != 0;
             if ( isParentOK && !ContainClient( parent ) )
@@ -628,18 +633,18 @@ namespace TileManTest
 
             if ( ( style & WindowStyles.WS_DISABLED ) != 0 )
             {
-                return false;
+                return TileMode.NoHandle;
             }
             // WS_POPUPWINDOW も含んでいる
             if ( ( style & WindowStyles.WS_POPUP ) != 0 )
             {
-                return false;
+                return TileMode.NoHandle;
             }
             bool hasParent = parent != IntPtr.Zero;
             var winIsVisibleAndNoParent = !hasParent && User32Methods.IsWindowVisible( hwnd );
             if ( winIsVisibleAndNoParent || isParentOK )
             {
-                if ( ( !isTool && !hasParent ) || ( isTool && isParentOK ) || (isApp && hasParent))
+                if ( ( !isTool && !hasParent ) || ( isTool && isParentOK ) || ( isApp && hasParent ) )
                 {
                     if ( value != null )
                     {
@@ -649,13 +654,12 @@ namespace TileManTest
                     }
                     if ( isBlackListName )
                     {
-                        AddUnhandle( hwnd , SelectedTag);
-                        return false;
+                        return TileMode.Float;
                     }
-                    return true;
+                    return TileMode.Tile;
                 }
             }
-            return false;
+            return TileMode.NoHandle;
         }
 
         private static WindowStyles WindowStyle( IntPtr hwnd )
@@ -687,7 +691,7 @@ namespace TileManTest
 
         void Tile()
         {
-            List<Client> clientList = SelectedClientList( );
+            List<Client> clientList = SelectedTiledClient( );
             if ( clientList.Count == 0 )
             {
                 return;
@@ -736,7 +740,7 @@ namespace TileManTest
 
         private List<Client> SlaveList( )
         {
-            return SelectedClientList( ).Skip( 1 ).ToList( );
+            return SelectedTiledClient( ).Skip( 1 ).ToList( );
         }
 
         void Unmanage( Client client )

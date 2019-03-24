@@ -34,7 +34,7 @@ namespace TileManTest
         bool TopBar = true;
         bool IsDirty = false;
         int UIHeight = 118;
-
+        int ToggleHotID = 100;
         float MasterFact = 0.55f;
         string SelectedTag = "1";
 
@@ -118,6 +118,8 @@ namespace TileManTest
                     //ScreenList[0].AddTag( i , temp );
                     ClientTitleList[ i - 1 ].Click += Form1_SelectedIndexChanged;
                 }
+                HotkeyList.Add( new HotKey( Handle , ToggleHotID , Keys.H , Keys.Control ) );
+
                 SetUp( );
                 ActiveClient = TryGetMaster( );
                 UpdateGeom( );
@@ -223,14 +225,7 @@ namespace TileManTest
             }
             else if ( code == WM.HOTKEY )
             {
-                foreach ( var item in HotkeyList )
-                {
-                    if ( m.LParam == item.LParam )
-                    {
-                        Trace.WriteLine( $"hotkey{item.ID}" );
-                        TagSignal( item );
-                    }
-                }
+                OnHotKey( m );
             }
             else
             {
@@ -247,6 +242,23 @@ namespace TileManTest
 
                 //if(code != 0 && wParam != IntPtr.Zero)
                 //Trace.WriteLine( $"code : {code} wParam : {wParam}" );
+        }
+
+        private void OnHotKey( System.Windows.Forms.Message m )
+        {
+            foreach ( var item in HotkeyList )
+            {
+                if ( m.LParam == item.LParam )
+                {
+                    Trace.WriteLine( $"hotkey{item.ID}" );
+                    if ( item.ID == ToggleHotID )
+                    {
+                        Visible = !Visible;
+                        return;
+                    }
+                    TagSignal( item );
+                }
+            }
         }
 
         Client ActiveClient;
@@ -717,7 +729,12 @@ namespace TileManTest
                 h = winGeom.Height;
             }
             var slaveList = SlaveList( );
+            var ver = Environment.OSVersion.Version.Major;
             int slaveCount = slaveList.Count;
+            if ( ver > 5 )
+            {
+
+            }
             for ( int i = 0 ; i < slaveCount ; i++ )
             {
 

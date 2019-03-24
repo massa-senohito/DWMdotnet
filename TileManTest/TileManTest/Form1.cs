@@ -1,4 +1,5 @@
 ﻿//#define USESCREENWORLD
+#define RECOVER
 using DWMDotnet;
 using Handles;
 using MouseCaptureTest;
@@ -20,6 +21,7 @@ using System.IO;
 
 namespace TileManTest
 {
+
     public partial class Form1 : Form
     {
         Timer UpdateTimer;
@@ -36,14 +38,14 @@ namespace TileManTest
         float MasterFact = 0.55f;
         string SelectedTag = "1";
 
-#if USESCREENWORLD
-#endif
-        //OrderedDictionary<TagType , TagManager> TagClientDic = new OrderedDictionary<TagType, TagManager>( );
-
         List<Client> SelectedClientList()
         {
-            //return TagClientDic[ SelectedTag ].ClientList;
-            return ScreenList[0].ClientList( SelectedTag );
+            List<Client> tmp = new List<Client>( );
+            foreach ( var screen in ScreenList )
+            {
+                tmp.AddRange( screen.ClientList( SelectedTag ) );
+            }
+            return tmp;
         }
 
         List<ScreenWorld> ScreenList = new List<ScreenWorld>( );
@@ -101,9 +103,12 @@ namespace TileManTest
                     var hotkeySend   = new HotKey( this.Handle, i + 10, d0 , sendTag);
                     HotkeyList.Add( hotkeyNotify );
                     HotkeyList.Add( hotkeySend );
-                    var temp = new TagManager( new List<Client>() , i );
-                    //TagClientDic.Add( i.ToString() , temp );
-                    ScreenList[0].AddTag( i , temp );
+
+                    foreach ( var item in ScreenList )
+                    {
+                        item.AddTag( i );
+                    }
+                    //ScreenList[0].AddTag( i , temp );
                     ClientTitleList[ i - 1 ].Click += Form1_SelectedIndexChanged;
                 }
                 SetUp( );
@@ -130,29 +135,11 @@ namespace TileManTest
 
         private void Form1_Paint( object sender , PaintEventArgs e )
         {
-            //for ( int i = 0 ; i < TagClientDic.Count ; i++ )
-            //{
-            //    var tagMan = TagClientDic.ElementAt( i ).Value;
-            //    var listBox = ClientTitleList[ i ];
-            //    //foreach ( var icon in tagMan.IconList )
-            //    List<System.Drawing.Icon> iconList = tagMan.IconList;
-            //    for ( int j = 0 ; j < iconList.Count ; j++ )
-            //    {
-            //        var icon = iconList[ j ];
-            //        var size = 12;
-            //        var rect = new DrawRectangle( listBox.Left - 16 , listBox.Top + j * size + 2 , size , size );
-            //        if ( icon != null )
-            //        {
-            //            // なんかnullでくることがあった
-            //            e.Graphics.DrawIcon( icon , rect );
-            //        }
-            //        else
-            //        {
-            //            tagMan.RemoveIcon( j );
-            //        }
-            //    }
-            //}
-            ScreenList[ 0 ].PaintIcon( ClientTitleList , e );
+            foreach ( var item in ScreenList )
+            {
+                item.PaintIcon( ClientTitleList , e );
+            }
+            //ScreenList[ 0 ].PaintIcon( ClientTitleList , e );
         }
 
         private void Form1_SelectedIndexChanged( object sender , EventArgs e )
@@ -173,17 +160,7 @@ namespace TileManTest
 
         private void CleanUp()
         {
-            int y = 0;
-            //foreach ( var tagMan in TagClientDic.Values )
-            foreach ( var tagMan in ScreenList[0].TagList )
-            {
-                foreach ( var client in tagMan.ClientList )
-                {
-                    DWM.setClientVisibility( client , true );
-                    User32Methods.MoveWindow( client.Hwnd , 0 , y , WindowGeom.Width , 480 , true );
-                }
-            }
-            // ScreenList[0].CleanUp();
+            ScreenList[0].CleanUp();
             foreach ( var hotkey in HotkeyList )
             {
                 hotkey.Unregister( );
@@ -307,8 +284,6 @@ namespace TileManTest
             ActiveClient = null;
             ScreenList[ 0 ].ChangeTag( currentTag , itemID );
             ScreenList[ 0 ].SetAllWindowFore( );
-            //currentTag.Visible( false );
-            //TagClientDic[ itemID ].Visible( true );
             SelectedTag = itemID;
             Tile( );
         }
@@ -601,13 +576,13 @@ namespace TileManTest
 
         }
 
-        void AddUnhandle( IntPtr hwnd )
+        void AddUnhandle( IntPtr hwnd , TagType tag)
         {
             foreach ( var item in ScreenList )
             {
                 if ( item.IsContainScreen( hwnd ) )
                 {
-                    item.AddUnhandledClient( CreateClient( hwnd ) );
+                    item.AddUnhandledClient( CreateClient( hwnd ) , tag );
                 }
             }
         }
@@ -630,11 +605,13 @@ namespace TileManTest
                 isBlackListName = true;
             }
             Trace.WriteLine( value + " : className = " + classText );
+#if RECOVER
             if ( value.Contains( "Chrome" ) || classText.Contains( "CabinetWClass" ) )
             {
                 DWM.setVisibility( hwnd , true );
                 return true;
             }
+#endif
             var parent = ThreadWindowHandles.GetParent( hwnd );
             var owner = User32Helpers.GetWindow( hwnd , GetWindowFlag.GW_OWNER );
             WindowStyles style = WindowStyle( hwnd );
@@ -672,7 +649,7 @@ namespace TileManTest
                     }
                     if ( isBlackListName )
                     {
-                        AddUnhandle( hwnd );
+                        AddUnhandle( hwnd , SelectedTag);
                         return false;
                     }
                     return true;
@@ -706,11 +683,6 @@ namespace TileManTest
             Rectangle rect = new Rectangle( x , y , x + w , y + h );
             DWM.resize( c , rect.Left , rect.Top , rect.Width , rect.Height , ScreenGeom.Rect );
             Trace.WriteLine( $"after {c.Title} rect : {c.Rect}" );
-        }
-
-        void ShowHide( Client client )
-        {
-            // 見えるべきでないものを見えなくし、逆を見せる
         }
 
         void Tile()

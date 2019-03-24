@@ -13,11 +13,10 @@ open System.Text
 //	HDC hdc;
 //} DC;
 
-type Arg =
-  |I of int
-  |UI of int
-  |F of float32
-  |V of obj
+type TileMode =
+  |Tile
+  |Float
+  |NoHandle
 
 let getWinText hwnd =
   let len = User32Methods.GetWindowTextLength(hwnd)
@@ -46,7 +45,8 @@ type Client =
     //Next:Client
     //mutable Snext:Client
     Style : WindowStyles
-    mutable Title:string
+    mutable TileMode : TileMode
+    mutable Title : string
   }
 
   member this.HasSizeUpdate() =
@@ -91,14 +91,7 @@ let createClient hwnd parent threadId style title =
     Ignore = false
     Style = style
     Title = title
-  }
-
-type Key =
-  {
-    Mod:int
-    Key:int
-    Func:Arg->unit
-    Arg:Arg
+    TileMode = Tile
   }
 
 //typedef struct {

@@ -18,7 +18,7 @@ namespace TileManTest
     {
         Screen _Screen;
         int AdjacentScrenOffset;
-        TagManager UnhandledTag;
+        OrderedDictionary<TagType , TagManager> UnhandledTag = new OrderedDictionary<TagType, TagManager>();
         // コピーならスキャン後やムーブ後
         OrderedDictionary<TagType , TagManager> TagClientDic = new OrderedDictionary<TagType, TagManager>( );
 
@@ -26,7 +26,7 @@ namespace TileManTest
         {
             _Screen = screen;
             AdjacentScrenOffset = screen.Bounds.Left;
-            UnhandledTag = new TagManager( new List<Types.Client>( ) , 20 );
+            //UnhandledTag = new TagManager( new List<Types.Client>( ) , 20 );
         }
 
         public bool IsContainScreen( IntPtr hwnd )
@@ -34,9 +34,9 @@ namespace TileManTest
             return _Screen == Screen.FromHandle( hwnd );
         }
 
-        public void AddUnhandledClient( Types.Client client )
+        public void AddUnhandledClient( Client client , TagType tag )
         {
-            UnhandledTag.AddClient( client );
+            UnhandledTag[ tag ].AddClient( client );
         }
 
         public List<Client> ClientList(string selectedTag)
@@ -44,10 +44,16 @@ namespace TileManTest
             return TagClientDic[ selectedTag ].ClientList;
         }
 
-        public void AddTag( int id , TagManager tag )
+        public void AddTag( int id )
         {
-            TagClientDic.Add( id.ToString( ) , tag );
+            var temp = new TagManager( new List<Client>() , id );
+            var temp2 = new TagManager( new List<Client>() , id );
+            TagClientDic.Add( id.ToString( ) , temp );
+            // こちらに足すよりclientにフラグ足す
+            UnhandledTag.Add( id.ToString( ) , temp2 );
         }
+
+
 
         public void PaintIcon(List<ListBox> clientTitleList, PaintEventArgs e )
         {
@@ -98,7 +104,7 @@ namespace TileManTest
             ChangeTag( Tag( currentTag ) , itemID );
         }
 
-        private void CleanUp()
+        public void CleanUp()
         {
             int y = 0;
             foreach ( var tagMan in TagClientDic.Values )

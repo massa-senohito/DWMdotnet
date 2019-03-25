@@ -115,7 +115,6 @@ namespace TileManTest
                     {
                         item.AddTag( i );
                     }
-                    //ScreenList[0].AddTag( i , temp );
                     ClientTitleList[ i - 1 ].Click += Form1_SelectedIndexChanged;
                 }
                 HotkeyList.Add( new HotKey( Handle , ToggleHotID , Keys.H , Keys.Control ) );
@@ -148,7 +147,6 @@ namespace TileManTest
             {
                 item.PaintIcon( ClientTitleList , e );
             }
-            //ScreenList[ 0 ].PaintIcon( ClientTitleList , e );
         }
 
         private void Form1_SelectedIndexChanged( object sender , EventArgs e )
@@ -169,7 +167,10 @@ namespace TileManTest
 
         private void CleanUp()
         {
-            ScreenList[0].CleanUp();
+            foreach ( var screen in ScreenList )
+            {
+                screen.CleanUp( );
+            }
             foreach ( var hotkey in HotkeyList )
             {
                 hotkey.Unregister( );
@@ -250,7 +251,7 @@ namespace TileManTest
             {
                 if ( m.LParam == item.LParam )
                 {
-                    Trace.WriteLine( $"hotkey{item.ID}" );
+                    Trace.WriteLine( $"hotkey {item.ID}" );
                     if ( item.ID == ToggleHotID )
                     {
                         Visible = !Visible;
@@ -267,7 +268,6 @@ namespace TileManTest
         {
             bool send = 9 < item.ID;
             TagManager currentTag =
-                //TagClientDic[ SelectedTag.ToString() ];
                 ScreenList[ 0 ].Tag( SelectedTag );
             string itemID = item.ID.ToString( );
             int sentDest = item.ID - 10;
@@ -309,7 +309,7 @@ namespace TileManTest
 
         private void OtherWindow( System.Windows.Forms.Message m , WM param , Client client )
         {
-            //Trace.WriteLine( client.Title + " " + param )
+            //Trace.WriteLine( client?.Title + " " + param );
             switch ( param )
             {
                 case WM.HSHELL_WINDOWCREATED:
@@ -473,19 +473,18 @@ namespace TileManTest
 
         private void CalcSlaveSizeFromMaster()
         {
-            Client client = TryGetMaster( );
-            if ( client == null )
+            Client masterClient = TryGetMaster( );
+            if ( masterClient == null )
             {
                 return;
             }
-            if ( client.HasSizeUpdate( ) )
+            if ( masterClient.HasSizeUpdate( ) )
             {
-                foreach ( var item in SlaveList( ) )
+                foreach ( var slave in SlaveList( ) )
                 {
-                    int x = client.Rect.Width;
-                    item.SetXW( x , ScreenGeom.Width - x );
+                    int x = masterClient.Rect.Width;
+                    slave.SetXW( x , ScreenGeom.Width - x );
                 }
-                return;
             }
         }
 
@@ -710,6 +709,7 @@ namespace TileManTest
             }
             var master = clientList.First( );
             RECT winGeom = WindowGeom;
+            // MasterWidthとどのスクリーン化だけ覚えておくほうが
             var masterWidth = MasterFact * winGeom.Width;
 
             bool onlyOne = clientList.Count == 1;
@@ -752,7 +752,9 @@ namespace TileManTest
 
         private Client TryGetMaster( )
         {
-            return SelectedClientList( ).FirstOrDefault( );
+            var master = SelectedTiledClient( ).FirstOrDefault( );
+            //Trace.WriteLine( master?.Title );
+            return master;
         }
 
         private List<Client> SlaveList( )

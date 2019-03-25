@@ -5,6 +5,7 @@ open WinApi.User32
 open Handles
 open NetCoreEx.Geometry
 open System.Text
+open System.Windows.Forms
 
 //typedef struct {
 //	int x, y, w, h;
@@ -66,7 +67,7 @@ type Client =
     needUpdate
 
   member t.CenterY =
-    (t.Rect.Top + t.Rect.Height) / 2
+    ( t.Rect.Top + t.Rect.Height ) / 2
 
   member private t.UpdateByRect() =
     User32Methods.SetWindowPos(t.Hwnd , nativeint(0) , t.Rect.X , t.Rect.Y , t.Rect.Width , t.Rect.Height , WindowPositionFlags.SWP_NOACTIVATE)
@@ -78,6 +79,13 @@ type Client =
   member t.SetXW x w =
     t.Rect <- new System.Drawing.Rectangle(x , t.Rect.Top, w , t.Rect.Height)
     t.UpdateByRect()
+  
+  member t.X = t.Rect.X
+  member t.Y = t.Rect.Y
+  member t.W = t.Rect.Width
+  member t.H = t.Rect.Height
+
+  member t.Screen = Screen.FromHandle( t.Hwnd )
 
 let createClient hwnd parent threadId style title =
   {

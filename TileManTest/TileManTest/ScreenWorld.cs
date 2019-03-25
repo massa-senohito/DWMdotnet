@@ -18,7 +18,6 @@ namespace TileManTest
     {
         Screen _Screen;
         int AdjacentScrenOffset;
-        OrderedDictionary<TagType , TagManager> UnhandledTag = new OrderedDictionary<TagType, TagManager>();
         // コピーならスキャン後やムーブ後
         OrderedDictionary<TagType , TagManager> TagClientDic = new OrderedDictionary<TagType, TagManager>( );
 
@@ -26,17 +25,11 @@ namespace TileManTest
         {
             _Screen = screen;
             AdjacentScrenOffset = screen.Bounds.Left;
-            //UnhandledTag = new TagManager( new List<Types.Client>( ) , 20 );
         }
 
         public bool IsContainScreen( IntPtr hwnd )
         {
             return _Screen == Screen.FromHandle( hwnd );
-        }
-
-        public void AddUnhandledClient( Client client , TagType tag )
-        {
-            UnhandledTag[ tag ].AddClient( client );
         }
 
         public List<Client> ClientList(string selectedTag)
@@ -47,15 +40,10 @@ namespace TileManTest
         public void AddTag( int id )
         {
             var temp = new TagManager( new List<Client>() , id );
-            var temp2 = new TagManager( new List<Client>() , id );
             TagClientDic.Add( id.ToString( ) , temp );
-            // こちらに足すよりclientにフラグ足す
-            UnhandledTag.Add( id.ToString( ) , temp2 );
         }
 
-
-
-        public void PaintIcon(List<ListBox> clientTitleList, PaintEventArgs e )
+        public void PaintIcon( List<ListBox> clientTitleList, PaintEventArgs e )
         {
             for ( int i = 0 ; i < TagClientDic.Count ; i++ )
             {
@@ -112,7 +100,7 @@ namespace TileManTest
                 foreach ( var client in tagMan.ClientList )
                 {
                     DWM.setClientVisibility( client , true );
-                    User32Methods.MoveWindow( client.Hwnd , 0 , y , 640 , 480 , true );
+                    //User32Methods.MoveWindow( client.Hwnd , client.X , client.Y , client.W , client.H , true );
                 }
             }
         }

@@ -1,0 +1,85 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".txt" #>
+<#
+  string KlassName = "ClientSetting";
+#>
+class <#= KlassName#>
+{
+<#
+string t = "string";
+string name = "TypeName";
+var ls = new List<TyName>()
+{
+new TyName("string","WindowName"),
+new TyName("string","WindowClass"),
+new TyName("string","TagId"),
+new TyName("TileMode","_TileMode"),
+};
+#>
+    public <#= KlassName#>(
+<#
+  foreach(var i in ls)
+  {
+#>
+      <#= i.ToProtString() #>,
+<# } #>
+    )
+    {
+ <#
+  foreach(var i in ls)
+  {
+#>
+     <#= i.ValueName #> = <#= i.ValueName.ToLower() #>;
+<# } #>       
+    }
+
+<#
+  foreach(var i in ls)
+  {
+#>
+    <#= i.ToMember() #>
+<# } #>
+}
+
+type Hoge
+{
+<#
+  foreach(var i in ls)
+  {
+#>
+   <#= i.ToFsMember() #>
+<# } #>
+}
+
+<#+
+class TyName{
+  public string TypeName;
+  public string ValueName;
+  public TyName(string typeName , string valueName)
+  {
+  TypeName = typeName;ValueName = valueName;
+  }
+            public string ToProtString()
+            {
+                return $"{TypeName} {ValueName.ToLower()}";
+            }
+            public string ToMember()
+            {
+                return $"public {TypeName} {ValueName}" + 
+@"
+    {
+        get ;
+        private set ; 
+    }";
+            }
+            public string ToFsMember()
+            {
+                return $"{ValueName} : {TypeName}";
+            }
+
+        }
+#>

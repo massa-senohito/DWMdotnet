@@ -7,10 +7,59 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Types;
 
 namespace TileManTest
 {
-    class TileSetting
+    class ClientSetting
+    {
+        public ClientSetting(
+          string windowname ,
+          string windowclass ,
+          string tagid ,
+          TileMode _tilemode
+        )
+        {
+            WindowName = windowname;
+            WindowClass = windowclass;
+            TagId = tagid;
+            _TileMode = _tilemode;
+
+        }
+
+        public string WindowName
+        {
+            get;
+            private set;
+        }
+        public string WindowClass
+        {
+            get;
+            private set;
+        }
+        public string TagId
+        {
+            get;
+            private set;
+        }
+        public TileMode _TileMode
+        {
+            get;
+            private set;
+        }
+
+        public bool MatchRule( IntPtr hwnd )
+        {
+            var title = ThreadWindowHandles.GetWindowText( hwnd );
+            var className = ThreadWindowHandles.GetClassText( hwnd );
+            if ( WindowName.Contains( title ) )
+            {
+                return true;
+            }
+            return false;
+        }
+    }
+class TileSetting
     {
         public List<string> NoTilingList = new List<string>( );
 

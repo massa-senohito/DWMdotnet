@@ -1,0 +1,46 @@
+﻿class ClientSetting
+{
+    public ClientSetting(
+      string windowname,
+      string windowclass,
+      string tagid,
+      TileMode _tilemode,
+    )
+    {
+      WindowName = windowname;
+     WindowClass = windowclass;
+     TagId = tagid;
+     _TileMode = _tilemode;
+       
+    }
+
+    public string WindowName
+    {
+        get ;
+        private set ; 
+    }
+    public string WindowClass
+    {
+        get ;
+        private set ; 
+    }
+    public string TagId
+    {
+        get ;
+        private set ; 
+    }
+    public TileMode _TileMode
+    {
+        get ;
+        private set ; 
+    }
+}
+
+type Hoge
+{
+   WindowName : string
+   WindowClass : string
+   TagId : string
+   _TileMode : TileMode
+}
+

@@ -142,7 +142,6 @@ namespace DWMDotnet
       let mutable copyY = y
       let mutable copyW = w
       let mutable copyH = h
-      //let scr = screenGeom
       if w <= 0 && h <= 0 then
         setClientVisibility c false
       else

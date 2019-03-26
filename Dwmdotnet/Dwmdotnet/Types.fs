@@ -48,6 +48,7 @@ type Client =
     Style : WindowStyles
     mutable TileMode : TileMode
     mutable Title : string
+    mutable PrevScreen : Screen
   }
 
   member this.HasSizeUpdate() =
@@ -86,6 +87,8 @@ type Client =
   member t.H = t.Rect.Height
 
   member t.Screen = Screen.FromHandle( t.Hwnd )
+  member t.ScreenChanged = t.Screen <> t.PrevScreen
+  member t.UpdateScreen() = t.PrevScreen <- t.Screen
 
 let createClient hwnd parent threadId style title =
   {
@@ -100,6 +103,7 @@ let createClient hwnd parent threadId style title =
     Style = style
     Title = title
     TileMode = Tile
+    PrevScreen = Screen.FromHandle( hwnd ) 
   }
 
 //typedef struct {

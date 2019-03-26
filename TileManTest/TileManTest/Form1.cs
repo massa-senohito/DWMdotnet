@@ -35,7 +35,6 @@ namespace TileManTest
         bool IsDirty = false;
         int UIHeight = 118;
         int ToggleHotID = 100;
-        float MasterFact = 0.55f;
         string SelectedTag = "1";
 
         List<Client> SelectedClientList()
@@ -154,7 +153,7 @@ namespace TileManTest
             var listBox = sender as ListBox;
             var newTag  = listBox.Name.Last( ).ToString();
             //ChangeTag( TagClientDic[ SelectedTag.ToString( ) ] , newTag );
-            ChangeTag( ScreenList[0].Tag( SelectedTag.ToString( ) ) , newTag );
+            ChangeTag( CurrentTag , newTag );
             SelectedTag = newTag;
             int selectedInd = listBox.SelectedIndex;
             //label3.Text = listBox.Name + " " + selectedInd.ToString();
@@ -162,6 +161,14 @@ namespace TileManTest
             {
                 User32Methods.SetForegroundWindow(
                 SelectedClientList( )[ selectedInd ].Hwnd );
+            }
+        }
+
+        private TagManager CurrentTag
+        {
+            get
+            {
+                return ScreenList[ 0 ].Tag( SelectedTag );
             }
         }
 
@@ -181,11 +188,6 @@ namespace TileManTest
         {
             CleanUp( );
 
-        }
-
-        void SetSelected( Client client )
-        {
-            // drawborder何もしてない
         }
 
         protected override void WndProc( ref System.Windows.Forms.Message m )
@@ -267,8 +269,7 @@ namespace TileManTest
         private void TagSignal( HotKey item )
         {
             bool send = 9 < item.ID;
-            TagManager currentTag =
-                ScreenList[ 0 ].Tag( SelectedTag );
+            TagManager currentTag = CurrentTag;
             string itemID = item.ID.ToString( );
             int sentDest = item.ID - 10;
             // 同じタグなら再度入らないように
@@ -301,7 +302,15 @@ namespace TileManTest
                 return;
             }
             ActiveClient = null;
+            // 移動前にマスターの長さを保存
+            CurrentTag.MasterWidth = TryGetMaster( )?.W ?? TagManager.DefaultMasterWidth;
             ScreenList[ 0 ].ChangeTag( currentTag , itemID );
+            // master1つなら大きさはスクリーンサイズになる、するとスレイブの大きさが0になってしまうので
+            if ( CurrentTag.MasterWidth == ScreenGeom.Width )
+            {
+                CurrentTag.MasterWidth = TagManager.DefaultMasterWidth;
+            }
+
             ScreenList[ 0 ].SetAllWindowFore( );
             SelectedTag = itemID;
             Tile( );
@@ -485,6 +494,14 @@ namespace TileManTest
                     int x = masterClient.Rect.Width;
                     slave.SetXW( x , ScreenGeom.Width - x );
                 }
+            }
+        }
+
+        private void ArrangeIfScreenChanged()
+        {
+            foreach ( var client in SelectedClientList() )
+            {
+
             }
         }
 
@@ -702,6 +719,11 @@ namespace TileManTest
 
         void Tile()
         {
+            foreach ( var screen in ScreenList )
+            {
+                screen.Tile( SelectedTag , UIHeight );
+            }
+#if OLDTILE
             List<Client> clientList = SelectedTiledClient( );
             if ( clientList.Count == 0 )
             {
@@ -710,7 +732,7 @@ namespace TileManTest
             var master = clientList.First( );
             RECT winGeom = WindowGeom;
             // MasterWidthとどのスクリーン化だけ覚えておくほうが
-            var masterWidth = MasterFact * winGeom.Width;
+            var masterWidth = CurrentTag.MasterWidth;//MasterFact * winGeom.Width;
 
             bool onlyOne = clientList.Count == 1;
             float width = ( onlyOne ? winGeom.Width : masterWidth ) - ( 2 * master.Bw );
@@ -720,10 +742,10 @@ namespace TileManTest
             {
                 return;
             }
-            var x = master.Rect.X + master.Rect.Width; 
+            var x = master.Rect.X + master.Rect.Width;
             int y = winGeom.Top + UIHeight;
             var w = winGeom.Left + winGeom.Width - ( int )width;
-            var h = (WindowGeom.Height - UIHeight) / clientList.Count;
+            var h = ( WindowGeom.Height - UIHeight ) / clientList.Count;
             if ( h < BarHeight )
             {
                 h = winGeom.Height;
@@ -748,6 +770,7 @@ namespace TileManTest
                     y = item.Rect.Top + rect.Height;
                 }
             }
+#endif
         }
 
         private Client TryGetMaster( )

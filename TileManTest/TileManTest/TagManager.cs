@@ -12,14 +12,14 @@ namespace TileManTest
 {
     class TagManager
     {
-        public TagManager(
-          List<Client> clientlist , int id
-        )
+        public static int DefaultMasterWidth = 1056;
+        public TagManager( List<Client> clientlist , int id )
         {
             ClientList = clientlist;
             Id = id;
             ClientsAreVisible = true;
             IconList = new List<Icon>( );
+            MasterWidth = DefaultMasterWidth;
         }
 
         public List<Client> ClientList
@@ -39,6 +39,22 @@ namespace TileManTest
             get;
             private set;
         }
+
+        public int _MasterWidth;
+
+        public int MasterWidth
+        {
+            get
+            {
+                return _MasterWidth;
+            }
+            set
+            {
+                _MasterWidth = value;
+            }
+        }
+
+
 
         public bool ClientsAreVisible
         {
@@ -82,6 +98,7 @@ namespace TileManTest
             var mayInd = ClientList.FindIndex( c => c.Hwnd == client.Hwnd );
             if ( mayInd != -1 )
             {
+                // アイコンが生成されないとインデックスが不一致になる
                 ClientList.RemoveAt( mayInd );
                 var icon = IconList[ mayInd ];
                 RemoveIcon( mayInd );

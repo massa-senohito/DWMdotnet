@@ -2,10 +2,9 @@
 using Handles;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using Whitebell.Library.Collections.Generic;
 using WinApi.User32;
@@ -18,6 +17,7 @@ namespace TileManTest
     {
         Screen _Screen;
         int AdjacentScrenOffset;
+        Rectangle ScreenGeom;
         // コピーならスキャン後やムーブ後
         OrderedDictionary<TagType , TagManager> TagClientDic = new OrderedDictionary<TagType, TagManager>( );
 
@@ -25,6 +25,7 @@ namespace TileManTest
         {
             _Screen = screen;
             AdjacentScrenOffset = screen.Bounds.Left;
+            ScreenGeom = screen.Bounds;
         }
 
         public bool IsContainScreen( IntPtr hwnd )
@@ -148,6 +149,60 @@ namespace TileManTest
         public void Attach( Client client , string dest )
         {
             TagClientDic[ dest ].AddClient( client );
+        }
+
+        void ResizeClient( Client c , int x , int y , int w , int h )
+        {
+            Trace.WriteLine( $"{c.Title} rect : {c.Rect}" );
+            Rectangle rect = new Rectangle( x , y , x + w , y + h );
+            DWM.resize( c , rect.Left , rect.Top , rect.Width , rect.Height , ScreenGeom );
+            Trace.WriteLine( $"after {c.Title} rect : {c.Rect}" );
+        }
+
+        public void Tile(string selectedTag , int UIHeight)
+        {
+            List<Client> tiledClient = ClientList( selectedTag ).Where( c => c.TileMode == TileMode.Tile ).ToList( );
+            if ( tiledClient.Count == 0 )
+            {
+                return;
+            }
+            var master = tiledClient.First( );
+            var masterWidth = Tag( selectedTag ).MasterWidth;
+            bool onlyOne = tiledClient.Count == 1;
+            masterWidth = onlyOne ? ScreenGeom.Width : masterWidth;
+            ResizeClient( master , ScreenGeom.Left , ScreenGeom.Top + UIHeight ,
+                masterWidth , ScreenGeom.Height - UIHeight );
+            if ( onlyOne )
+            {
+                return;
+            }
+            var winGeom = ScreenGeom;
+            var x = master.Rect.X + master.Rect.Width; 
+            int y = winGeom.Top + UIHeight;
+            var w = winGeom.Width - masterWidth;
+            var h = (ScreenGeom.Height - UIHeight) / tiledClient.Count;
+
+            var slaveList = tiledClient.Skip( 1 ).ToList( );
+            var ver = Environment.OSVersion.Version.Major;
+            int slaveCount = slaveList.Count;
+            if ( ver > 5 )
+            {
+
+            }
+            for ( int i = 0 ; i < slaveCount ; i++ )
+            {
+
+                var item = slaveList[ i ];
+                bool isLastOne = ( i + 1 == slaveCount );
+                var height = isLastOne ? winGeom.Top + winGeom.Height - y - 2 * item.Bw : h - 2 * item.Bw;
+                ResizeClient( item , x , y , w - 2 * item.Bw , height );
+                User32Methods.GetWindowRect( item.Hwnd , out var rect );
+                if ( !isLastOne )
+                {
+                    y = item.Rect.Top + rect.Height;
+                }
+            }
+            
         }
 
     }

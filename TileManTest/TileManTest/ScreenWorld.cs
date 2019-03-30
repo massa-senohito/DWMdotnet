@@ -33,6 +33,11 @@ namespace TileManTest
             return _Screen == Screen.FromHandle( hwnd );
         }
 
+        public bool IsSameScreen( Screen screen )
+        {
+            return screen == _Screen;
+        }
+
         public List<Client> ClientList(string selectedTag)
         {
             return TagClientDic[ selectedTag ].ClientList;
@@ -154,7 +159,7 @@ namespace TileManTest
         void ResizeClient( Client c , int x , int y , int w , int h )
         {
             Trace.WriteLine( $"{c.Title} rect : {c.Rect}" );
-            Rectangle rect = new Rectangle( x , y , x + w , y + h );
+            Rectangle rect = new Rectangle( x , y , w , h );
             DWM.resize( c , rect.Left , rect.Top , rect.Width , rect.Height , ScreenGeom );
             Trace.WriteLine( $"after {c.Title} rect : {c.Rect}" );
         }
@@ -172,6 +177,7 @@ namespace TileManTest
             masterWidth = onlyOne ? ScreenGeom.Width : masterWidth;
             ResizeClient( master , ScreenGeom.Left , ScreenGeom.Top + UIHeight ,
                 masterWidth , ScreenGeom.Height - UIHeight );
+            Trace.WriteLine( $"master {master.Title} : {master.Rect}" );
             if ( onlyOne )
             {
                 return;
@@ -196,6 +202,7 @@ namespace TileManTest
                 bool isLastOne = ( i + 1 == slaveCount );
                 var height = isLastOne ? winGeom.Top + winGeom.Height - y - 2 * item.Bw : h - 2 * item.Bw;
                 ResizeClient( item , x , y , w - 2 * item.Bw , height );
+                Trace.WriteLine( $"slave {item.Title} : {item.Rect}" );
                 User32Methods.GetWindowRect( item.Hwnd , out var rect );
                 if ( !isLastOne )
                 {
@@ -205,5 +212,9 @@ namespace TileManTest
             
         }
 
+        public override string ToString()
+        {
+            return _Screen.DeviceName;
+        }
     }
 }

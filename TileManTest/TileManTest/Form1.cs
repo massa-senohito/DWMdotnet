@@ -497,11 +497,27 @@ namespace TileManTest
             }
         }
 
+        ScreenWorld FindScreen( Screen screen )
+        {
+            foreach ( var item in ScreenList )
+            {
+                if ( item.IsSameScreen(screen) )
+                {
+                    return item;
+                }
+            }
+            Debug.Assert( false );
+            return null;
+        }
+
         private void ArrangeIfScreenChanged()
         {
             foreach ( var client in SelectedClientList() )
             {
+                if ( client.ScreenChanged )
+                {
 
+                }
             }
         }
 
@@ -721,7 +737,10 @@ namespace TileManTest
         {
             foreach ( var screen in ScreenList )
             {
+                Trace.WriteLine( $"Tile() {screen}" );
+                Trace.Indent( );
                 screen.Tile( SelectedTag , UIHeight );
+                Trace.Unindent( );
             }
 #if OLDTILE
             List<Client> clientList = SelectedTiledClient( );

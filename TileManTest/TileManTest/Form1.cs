@@ -54,7 +54,7 @@ namespace TileManTest
             return SelectedClientList( ).Where( c => c.TileMode == TileMode.Tile ).ToList();
         }
 
-        List<ScreenWorld> ScreenList = new List<ScreenWorld>( );
+        List<IScreenWorld> ScreenList = new List<IScreenWorld>( );
         List<ListBox> ClientTitleList;
 
         const string SettingPath = "TileSetting.txt";
@@ -79,7 +79,7 @@ namespace TileManTest
             foreach ( var item in scrList )
             {
                 Trace.WriteLine( item.DeviceName + " " + item.Bounds );
-                ScreenList.Add( new ScreenWorld( item ) );
+                ScreenList.Add( ScreenWorld.CreateScreenWorld( item ) );
                 // https://stackoverflow.com/questions/53012896/using-setwindowpos-with-multiple-monitors
             }
 
@@ -497,7 +497,7 @@ namespace TileManTest
             }
         }
 
-        ScreenWorld FindScreen( Screen screen )
+        IScreenWorld FindScreen( Screen screen )
         {
             foreach ( var item in ScreenList )
             {

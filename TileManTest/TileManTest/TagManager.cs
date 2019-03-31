@@ -10,7 +10,7 @@ using static Types;
 
 namespace TileManTest
 {
-    class TagManager
+    public class TagManager
     {
         public static int DefaultMasterWidth = 1056;
         public TagManager( List<Client> clientlist , int id )

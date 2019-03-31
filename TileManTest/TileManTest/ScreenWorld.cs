@@ -8,12 +8,49 @@ using System.Linq;
 using System.Windows.Forms;
 using Whitebell.Library.Collections.Generic;
 using WinApi.User32;
+using Castle.DynamicProxy;
+using Autofac.Extras.DynamicProxy;
+using Autofac;
 using static Types;
 using TagType = System.String;
 
 namespace TileManTest
 {
-    class ScreenWorld
+    public class CallLogger : IInterceptor
+    {
+        bool IsBlackMethod( IInvocation invocation )
+        {
+            List<string> blackList = new List<TagType>
+            {
+                "ClientList",
+                "TagList",
+            };
+            return blackList.Any( s => invocation.Method.Name.Contains( s ) );
+        }
+#line hidden
+        public void Intercept( IInvocation invocation )
+        {
+            string args = string.Join( ", " , invocation.Arguments.Select( a => ( a ?? "" ).ToString( ) ).ToArray( ) );
+            //Trace.WriteLine( invocation.InvocationTarget );
+            var cal = invocation.InvocationTarget as ScreenWorld;
+            //cal.Dump( );
+            if ( !IsBlackMethod( invocation ) )
+            {
+                args = "";
+                Trace.WriteLine( $"method : {invocation.Method.Name} with parameters {args}... " );
+            }
+            invocation.Proceed( );
+            cal = invocation.InvocationTarget as ScreenWorld;
+            //cal.Dump( );
+            if ( !IsBlackMethod( invocation ) )
+            {
+                //Trace.WriteLine( $"Done: result was {invocation.ReturnValue}." );
+            }
+        }
+#line default
+    }
+
+    public class ScreenWorld : IScreenWorld
     {
         Screen _Screen;
         int AdjacentScrenOffset;
@@ -212,9 +249,34 @@ namespace TileManTest
             
         }
 
+        public static IScreenWorld CreateScreenWorld( Screen screen )
+        {
+            if ( false )
+            {
+
+                var builder = new ContainerBuilder( );
+                builder.RegisterType<ScreenWorld>( ).As<IScreenWorld>( ).EnableInterfaceInterceptors( );
+                builder.Register( c => new CallLogger( ) );
+                var container = builder.Build( );
+                var willBeIntercepted = container.Resolve<IScreenWorld>( TypedParameter.From( screen ) );
+                return willBeIntercepted;
+            }
+            else
+            {
+                return new ScreenWorld( screen );
+            }
+
+        }
+
+        public void Dump()
+        {
+        }
+
         public override string ToString()
         {
             return _Screen.DeviceName;
         }
+
+
     }
 }

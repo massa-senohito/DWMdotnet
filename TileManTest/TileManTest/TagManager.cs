@@ -83,6 +83,7 @@ namespace TileManTest
 
         public void AddClient( Client c )
         {
+            DebugLogger.GlobalLogger.Info( $"add {c.Title}" );
             ClientList.Add( c );
             Icon item = Win32dll.GetAppIcon( c.Hwnd );
             IconList.Add( item );
@@ -99,6 +100,7 @@ namespace TileManTest
             if ( mayInd != -1 )
             {
                 // アイコンが生成されないとインデックスが不一致になる
+                DebugLogger.GlobalLogger.Info( $"removed {client.Title}" );
                 ClientList.RemoveAt( mayInd );
                 var icon = IconList[ mayInd ];
                 RemoveIcon( mayInd );
@@ -110,6 +112,7 @@ namespace TileManTest
 
         public void RemoveIcon( int ind )
         {
+            DebugLogger.GlobalLogger.Info( $"removedIcon {ind}" );
             IconList.RemoveAt( ind );
         }
 

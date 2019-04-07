@@ -441,6 +441,7 @@ namespace TileManTest
 
         private void T_Tick( object sender , EventArgs e )
         {
+            DebugLogger.GlobalLogger.Update( );
             var wnd = Win32dll.WindowFromPoint( MousePosition.X , MousePosition.Y );
             uint procID = 0;
             label2.Text = wnd.ToString( );
@@ -654,8 +655,9 @@ namespace TileManTest
 #if RECOVER
             if ( 
                 value.Contains( "Chrome" ) ||
-                value.Contains( "Avast Secure"  ) ||
-                classText.Contains( "CabinetWClass" ) )
+                value.Contains( "Avast Secure" ) ||
+                classText.Contains( "CabinetWClass" )
+                )
             {
                 DWM.setVisibility( hwnd , true );
                 return TileMode.Tile;

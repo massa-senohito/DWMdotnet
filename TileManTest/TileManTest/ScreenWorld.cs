@@ -62,7 +62,7 @@ namespace TileManTest
         {
             _Screen = screen;
             AdjacentScrenOffset = screen.Bounds.Left;
-            ScreenGeom = screen.Bounds;
+            ScreenGeom = screen.WorkingArea;
         }
 
         public bool IsContainScreen( IntPtr hwnd )

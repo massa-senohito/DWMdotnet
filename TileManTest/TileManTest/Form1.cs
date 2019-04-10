@@ -75,11 +75,10 @@ namespace TileManTest
         {
             _TileSetting = TileSetting.Load( SettingPath );
             var scrList = Screen.AllScreens;
-            int widthSum = 0;
-            foreach ( var item in scrList )
+            foreach ( var screen in scrList )
             {
-                Trace.WriteLine( item.DeviceName + " " + item.Bounds );
-                ScreenList.Add( ScreenWorld.CreateScreenWorld( item ) );
+                Trace.WriteLine( screen.DeviceName + " " + screen.Bounds );
+                ScreenList.Add( ScreenWorld.CreateScreenWorld( screen ) );
                 // https://stackoverflow.com/questions/53012896/using-setwindowpos-with-multiple-monitors
             }
 
@@ -110,9 +109,9 @@ namespace TileManTest
                     HotkeyList.Add( hotkeyNotify );
                     HotkeyList.Add( hotkeySend );
 
-                    foreach ( var item in ScreenList )
+                    foreach ( var screen in ScreenList )
                     {
-                        item.AddTag( i );
+                        screen.AddTag( i );
                     }
                     ClientTitleList[ i - 1 ].Click += Form1_SelectedIndexChanged;
                 }
@@ -132,6 +131,9 @@ namespace TileManTest
                 UpdateTimer.Tick += T_Tick;
                 UpdateTimer.Start( );
                 Paint += Form1_Paint;
+                // 狭いスクリーンだとquitがなくなることがある
+                var widestScr = scrList.OrderBy( s => s.WorkingArea.Width ).Last( );
+                Location = widestScr.Bounds.Location;
             }
             catch ( Exception ex )
             {
@@ -295,24 +297,30 @@ namespace TileManTest
             }
         }
 
-        private void ChangeTag( TagManager currentTag , string itemID )
+        private void ChangeTag( TagManager currentTag , string nextTag )
         {
-            if ( itemID == SelectedTag )
+            if ( nextTag == SelectedTag )
             {
                 return;
             }
             ActiveClient = null;
             // 移動前にマスターの長さを保存
             CurrentTag.MasterWidth = TryGetMaster( )?.W ?? TagManager.DefaultMasterWidth;
-            ScreenList[ 0 ].ChangeTag( currentTag , itemID );
+            foreach ( var screen in ScreenList )
+            {
+                screen.ChangeTag( currentTag , nextTag );
+            }
             // master1つなら大きさはスクリーンサイズになる、するとスレイブの大きさが0になってしまうので
             if ( CurrentTag.MasterWidth == ScreenGeom.Width )
             {
                 CurrentTag.MasterWidth = TagManager.DefaultMasterWidth;
             }
 
-            ScreenList[ 0 ].SetAllWindowFore( );
-            SelectedTag = itemID;
+            foreach ( var screen in ScreenList )
+            {
+                screen.SetAllWindowFore( );
+            }
+            SelectedTag = nextTag;
             Tile( );
         }
 
@@ -403,16 +411,6 @@ namespace TileManTest
             WindowGeom = new RECT( ScreenGeom );
         }
 
-        bool HasUpdateClientTitle( Client client )
-        {
-            if ( client.HasTitleUpdate( ) )
-            {
-                IsDirty = true;
-                return true;
-            }
-            return false;
-        }
-
         private void UpdateClient()
         {
             var bui = new StringBuilder( );
@@ -429,14 +427,13 @@ namespace TileManTest
                     }
                 }
             }
-            // ScreenList[ 0 ].ForeachClient( HasUpdateClientTitle );
-            //label3.Text = bui.ToString( );
         }
 
         void UpdateTitle( TagManager tagMan )
         {
             ClientTitleList[ tagMan.Id - 1 ].Items.Clear( );
-            ClientTitleList[ tagMan.Id - 1 ].Items.AddRange( tagMan.ClientTitles.ToArray( ) );
+            string[] items = tagMan.ClientTitles.ToArray( );
+            ClientTitleList[ tagMan.Id - 1 ].Items.AddRange( items );
         }
 
         private void T_Tick( object sender , EventArgs e )
@@ -461,17 +458,53 @@ namespace TileManTest
 
             if ( IsDirty )
             {
-                //foreach ( var tagMan in TagClientDic.Values )
-                foreach ( var tagMan in ScreenList[0].TagList )
+#if MultiScreen
+                foreach ( var screen in ScreenList )
                 {
-                    UpdateTitle( tagMan );
+                    foreach ( var tagMan in screen.TagList )
+#else
+                    foreach ( var tagMan in ScreenList[0].TagList )
+#endif
+                    {
+                        UpdateTitle( tagMan );
+                    }
+#if MultiScreen
                 }
+#endif
                 Invalidate( );
                 IsDirty = false;
             }
 
             CalcSlaveSizeFromMaster( );
 
+            UpdateSlaveSize( );
+
+            foreach ( var screen in ScreenList )
+            {
+                var movedClientList = screen.MovedClients( SelectedTag );
+                UpdateClientScreen( movedClientList );
+                //movedClientList
+            }
+        }
+
+        private void UpdateClientScreen( IEnumerable<Client> movedClientList )
+        {
+            var mov = movedClientList.ToList( );
+            foreach ( var item in mov )
+            {
+                foreach ( var inscreen in ScreenList )
+                {
+                    if ( inscreen.IsSameScreen( item.Screen ) )
+                    {
+                        // todo remove
+                        inscreen.Tag( SelectedTag ).AddClient( item );
+                    }
+                }
+            }
+        }
+
+        private void UpdateSlaveSize()
+        {
             foreach ( var item in SlaveList( ) )
             {
                 if ( item.HasSizeUpdate( ) )
@@ -517,7 +550,7 @@ namespace TileManTest
             {
                 if ( client.ScreenChanged )
                 {
-
+                    DebugLogger.GlobalLogger.Warn( $"scr changed {client.Title}" );
                 }
             }
         }
@@ -589,7 +622,17 @@ namespace TileManTest
         private void Attach( Client client , string dest )
         {
             //TagClientDic[ dest ].AddClient( client );
+#if MultiScreen
+            foreach ( var screen in ScreenList )
+            {
+                if ( screen.IsSameScreen( client.Screen ) )
+                {
+                    screen.Attach( client , dest );
+                }
+            }
+#else
             ScreenList[ 0 ].Attach( client , dest );
+#endif
             IsDirty = true;
         }
 
@@ -644,18 +687,19 @@ namespace TileManTest
             {
                 return TileMode.NoHandle;
             }
-            String value = ThreadWindowHandles.GetWindowText( hwnd );
+            String windowText = ThreadWindowHandles.GetWindowText( hwnd );
             String classText = ThreadWindowHandles.GetClassText( hwnd );
             bool isBlackListName = false;
             if ( !_TileSetting.IsTilingTarget( hwnd ) )
             {
                 isBlackListName = true;
             }
-            Trace.WriteLine( value + " : className = " + classText );
+            Trace.WriteLine( windowText + " : className = " + classText );
 #if RECOVER
             if ( 
-                value.Contains( "Chrome" ) ||
-                value.Contains( "Avast Secure" ) ||
+                windowText.Contains( "Chrome" ) ||
+                windowText.Contains( "Avast Secure" ) ||
+                windowText.Contains( "Visual" ) ||
                 classText.Contains( "CabinetWClass" )
                 )
             {
@@ -692,10 +736,10 @@ namespace TileManTest
             {
                 if ( ( !isTool && !hasParent ) || ( isTool && isParentOK ) || ( isApp && hasParent ) )
                 {
-                    if ( value != null )
+                    if ( windowText != null )
                     {
 
-                        Trace.Write( value );
+                        Trace.Write( windowText );
                         Trace.WriteLine( " isTool : " + isTool + " isApp : " + isApp + " style : " + style );
                     }
                     if ( isBlackListName )
@@ -815,13 +859,16 @@ namespace TileManTest
         private void Detach( Client client )
         {
             //foreach ( var item in TagClientDic.Values )
-            foreach ( var tagMan in ScreenList[0].TagList )
+            foreach ( var screen in ScreenList )
             {
-                var contains = tagMan.RemoveClient(client);
-                if ( contains  )
+                foreach ( var tagMan in screen.TagList )
                 {
-                    IsDirty = true;
-                    return ;
+                    var contains = tagMan.RemoveClient( client );
+                    if ( contains )
+                    {
+                        IsDirty = true;
+                        return;
+                    }
                 }
             }
         }
@@ -835,9 +882,17 @@ namespace TileManTest
 
         private void QuitButton_Click( object sender , EventArgs e )
         {
+            foreach ( var screen in ScreenList )
+            {
+
+                foreach ( var tagMan in screen.TagList )
+                {
+                    //tagMan.DumpIcon( );
+                }
+            }
             CleanUp( );
             Close( );
-            File.WriteAllText( SettingPath , _TileSetting.ToJson( ) );
+            //File.WriteAllText( SettingPath , _TileSetting.ToJson( ) );
         }
     }
 }

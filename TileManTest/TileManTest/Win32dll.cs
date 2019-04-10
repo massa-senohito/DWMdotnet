@@ -163,9 +163,14 @@ namespace MouseCaptureTest
         public static IntPtr GetClassLongPtr( IntPtr hWnd , int nIndex )
         {
             if ( IntPtr.Size > 4 )
+            {
                 return GetClassLongPtr64( hWnd , nIndex );
+            }
             else
-                return new IntPtr( GetClassLongPtr32( hWnd , nIndex ) );
+            {
+                uint value = GetClassLongPtr32( hWnd , nIndex );
+                return new IntPtr( value );
+            }
         }
 
         [DllImport( "user32.dll" , EntryPoint = "GetClassLong" )]

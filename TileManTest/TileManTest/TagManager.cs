@@ -3,6 +3,7 @@ using MouseCaptureTest;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -69,6 +70,19 @@ namespace TileManTest
                 DWM.setClientVisibility( item , visible);
             }
             ClientsAreVisible = visible;
+        }
+
+        public void DumpIcon()
+        {
+            for ( int i = 0 ; i < IconList.Count ; i++ )
+            {
+                var icon = IconList[ i ];
+                using ( FileStream file = new FileStream( $"{ClientList[ i ].Title}.bmp" , FileMode.OpenOrCreate ) )
+                {
+                    icon.Save( file );
+                }
+            }
+
         }
 
         public Client TryGetClient( IntPtr hwnd )

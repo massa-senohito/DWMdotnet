@@ -72,16 +72,21 @@ namespace TileManTest
             {
                 Layout = layout
             };
+            var log4ViewTarget = new NLog.Targets.NLogViewerTarget( )
+            {
+                Address = "udp://127.0.0.1:878"
+            }   ;
 
             var config = new LoggingConfiguration();
             config.AddRule( LogLevel.Info , LogLevel.Fatal , debugStr );
-            config.AddRule( LogLevel.Info , LogLevel.Fatal , target );
+            //config.AddRule( LogLevel.Info , LogLevel.Fatal , target );
+            config.AddRule( LogLevel.Info , LogLevel.Fatal , log4ViewTarget );
 
             LogManager.Configuration = config;
 
-            var form = target.TargetForm;
-            form.TopMost = true;
-            LoggerForm = form;
+            //var form = target.TargetForm;
+            //form.TopMost = true;
+            //LoggerForm = form;
         }
 
         static readonly DebugLogger _GlobalLogger = new DebugLogger();

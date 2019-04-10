@@ -72,7 +72,7 @@ namespace TileManTest
 
         public bool IsSameScreen( Screen screen )
         {
-            return screen == _Screen;
+            return screen.Bounds == _Screen.Bounds;
         }
 
         public List<Client> ClientList(string selectedTag)
@@ -92,7 +92,6 @@ namespace TileManTest
             {
                 var tagMan = TagClientDic.ElementAt( i ).Value;
                 var listBox = clientTitleList[ i ];
-                //foreach ( var icon in tagMan.IconList )
                 List<Icon> iconList = tagMan.IconList;
                 for ( int j = 0 ; j < iconList.Count ; j++ )
                 {
@@ -107,10 +106,27 @@ namespace TileManTest
                     else
                     {
                         tagMan.RemoveIcon( j );
+                        DebugLogger.GlobalLogger.Warn( $"icon {j} removed illegal" );
                     }
                 }
             }
         }
+
+        public IEnumerable<Client> MovedClients(TagType SelectedTag)
+        {
+            var clientList = ClientList( SelectedTag );
+            foreach ( var client in clientList )
+            {
+                if ( client.ScreenChanged )
+                {
+                    yield return client;
+                }
+                client.UpdateScreen( );
+
+            }
+        }
+
+
 
         public TagManager Tag( string id )
         {
@@ -137,7 +153,6 @@ namespace TileManTest
 
         public void CleanUp()
         {
-            int y = 0;
             foreach ( var tagMan in TagClientDic.Values )
             {
                 foreach ( var client in tagMan.ClientList )

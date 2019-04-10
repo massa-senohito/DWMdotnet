@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
+using TagType = System.String;
 
 namespace TileManTest
 {
@@ -15,6 +16,7 @@ namespace TileManTest
 
         void AddTag( int id );
         void Attach( Types.Client client , string dest );
+        IEnumerable<Types.Client> MovedClients( TagType SelectedTag );
         void ChangeTag( string currentTag , string itemID );
         void ChangeTag( TagManager currentTag , string itemID );
         void CleanUp();

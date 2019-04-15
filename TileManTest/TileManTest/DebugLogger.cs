@@ -13,24 +13,27 @@ namespace TileManTest
     class DebugLogger
     {
         // https://nlog-project.org/config/?tab=targets
-        private static Logger Logger =
-            LogManager.GetLogger("NLog.UnitTests.Targets.RichTextBoxTargetTests");
+        private Logger Logger;
+        string Name;
 
-        int Frame;
+        static int Frame;
         Form LoggerForm; 
 
         string Ondate( LogEventInfo info )
         {
-            // 来たメッセージやスタックトレースも出せる
+            var frame = Frame.ToString( ).PadLeft( 8 );
+            var xml = $"<log4j:event logger=\"{Name}\" level=\"{info.Level}\" timestamp=\"{info.TimeStamp.ToLongTimeString( )}\" thread=\"1\"><log4j:message>{frame} {info.FormattedMessage}</log4j:message><log4j:properties><log4j:data name=\"log4japp\" value=\"LogTest.exe(3124)\" /><log4j:data name=\"log4jmachinename\" value=\"MYCOMPUTER\" /></log4j:properties></log4j:event>";
+
             var stack = info.StackTrace?.ToString( );
-            return Frame.ToString();
+            //return Frame.ToString();
+            return xml; 
         }
 
         public void Fatal<T>(T value)
         {
             Logger.Fatal( value );
         }
-        public void Frror<T>( T value )
+        public void Error<T>( T value )
         {
             Logger.Error( value );
         }
@@ -51,8 +54,10 @@ namespace TileManTest
             Logger.Trace( value );
         }
 
-        public DebugLogger()
+        public DebugLogger(string name)
         {
+            Logger = LogManager.GetLogger(name);
+            Name = name;
             // ログが出されたときにどういう形式で表示するか決められる マクロは自分で定義できる
             var layout = "${level} ${message} ${frame}";
 
@@ -72,10 +77,11 @@ namespace TileManTest
             {
                 Layout = layout
             };
-            var log4ViewTarget = new NLog.Targets.NLogViewerTarget( )
+            var log4ViewTarget = new NLog.Targets.NetworkTarget() //new NLog.Targets.NLogViewerTarget( )
             {
-                Address = "udp://127.0.0.1:878"
+                Address = "udp://127.0.0.1:7071"
             }   ;
+            log4ViewTarget.Layout = "${frame} ";
 
             var config = new LoggingConfiguration();
             config.AddRule( LogLevel.Info , LogLevel.Fatal , debugStr );
@@ -89,7 +95,7 @@ namespace TileManTest
             //LoggerForm = form;
         }
 
-        static readonly DebugLogger _GlobalLogger = new DebugLogger();
+        static readonly DebugLogger _GlobalLogger = new DebugLogger("global");
         public static DebugLogger GlobalLogger
         {
             get
@@ -98,7 +104,7 @@ namespace TileManTest
             }
         }
 
-        public void Update()
+        public static void Update()
         {
             Frame++;
         }

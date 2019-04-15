@@ -59,15 +59,32 @@ namespace TileManTest
             return false;
         }
     }
-class TileSetting
+
+    class TileSetting
     {
         public List<string> NoTilingList = new List<string>( );
+
+        private bool HasTarget( List<string> list , IntPtr hwnd )
+        {
+            var title = ThreadWindowHandles.GetWindowText( hwnd );
+            var classText = ThreadWindowHandles.GetClassText( hwnd );
+            foreach ( var item in list )
+            {
+                bool titleCont = title.Contains( item );
+                bool classCont = classText.Contains( item );
+                if ( titleCont || classCont )
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
 
         // タイル化対象
         public bool IsTilingTarget( IntPtr hwnd )
         {
             var title = ThreadWindowHandles.GetWindowText( hwnd );
-            String classText = ThreadWindowHandles.GetClassText( hwnd );
+            var classText = ThreadWindowHandles.GetClassText( hwnd );
             // 一部分で
             foreach ( var item in NoTilingList )
             {
@@ -79,6 +96,11 @@ class TileSetting
                 }
             }
             return true;
+        }
+
+        public bool IsBlackTarget( IntPtr hwnd )
+        {
+            return HasTarget( new List<string>( ) { "Hwnd" } , hwnd );
         }
 
         public string ToJson()

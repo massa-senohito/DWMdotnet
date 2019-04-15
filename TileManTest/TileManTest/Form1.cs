@@ -1,5 +1,6 @@
 ﻿//#define USESCREENWORLD
 //#define RECOVER
+//#define MultiScreen
 using DWMDotnet;
 using Handles;
 using MouseCaptureTest;
@@ -59,6 +60,7 @@ namespace TileManTest
 
         const string SettingPath = "TileSetting.txt";
         TileSetting _TileSetting ;
+        DebugLogger Logger;
 
         void ChangeMaster( Client client )
         {
@@ -73,6 +75,7 @@ namespace TileManTest
 
         public Form1()
         {
+            Logger = new DebugLogger( "Form1" );
             _TileSetting = TileSetting.Load( SettingPath );
             var scrList = Screen.AllScreens;
             foreach ( var screen in scrList )
@@ -438,7 +441,7 @@ namespace TileManTest
 
         private void T_Tick( object sender , EventArgs e )
         {
-            DebugLogger.GlobalLogger.Update( );
+            DebugLogger.Update( );
             var wnd = Win32dll.WindowFromPoint( MousePosition.X , MousePosition.Y );
             uint procID = 0;
             label2.Text = wnd.ToString( );
@@ -478,28 +481,37 @@ namespace TileManTest
             CalcSlaveSizeFromMaster( );
 
             UpdateSlaveSize( );
+#if MultiScreen
+            var movedClientList = ScreenList.SelectMany(screen=> screen.MovedClients( SelectedTag ));
+            UpdateClientScreen( movedClientList );
 
             foreach ( var screen in ScreenList )
             {
-                var movedClientList = screen.MovedClients( SelectedTag );
-                UpdateClientScreen( movedClientList );
-                //movedClientList
+                screen.UpdateScreen( SelectedTag );
             }
+#endif
         }
 
         private void UpdateClientScreen( IEnumerable<Client> movedClientList )
         {
             var mov = movedClientList.ToList( );
-            foreach ( var item in mov )
+            foreach ( var movedClient in mov )
             {
+                IScreenWorld fromWorld = null;
+                IScreenWorld toWorld = null;
                 foreach ( var inscreen in ScreenList )
                 {
-                    if ( inscreen.IsSameScreen( item.Screen ) )
+                    if ( inscreen.IsSameScreen( movedClient.Screen ) )
                     {
-                        // todo remove
-                        inscreen.Tag( SelectedTag ).AddClient( item );
+                        toWorld = inscreen;
+                    }
+                    if ( inscreen.IsSameScreen( movedClient.PrevScreen ) )
+                    {
+                        fromWorld = inscreen;
                     }
                 }
+                toWorld.Tag( SelectedTag ).AddClient( movedClient );
+                fromWorld.Tag( SelectedTag ).RemoveClient( movedClient );
             }
         }
 
@@ -689,10 +701,14 @@ namespace TileManTest
             }
             String windowText = ThreadWindowHandles.GetWindowText( hwnd );
             String classText = ThreadWindowHandles.GetClassText( hwnd );
-            bool isBlackListName = false;
+            bool isFloatListName = false;
             if ( !_TileSetting.IsTilingTarget( hwnd ) )
             {
-                isBlackListName = true;
+                isFloatListName = true;
+            }
+            if ( _TileSetting.IsBlackTarget( hwnd ) )
+            {
+                return TileMode.NoHandle;
             }
             Trace.WriteLine( windowText + " : className = " + classText );
 #if RECOVER
@@ -742,7 +758,7 @@ namespace TileManTest
                         Trace.Write( windowText );
                         Trace.WriteLine( " isTool : " + isTool + " isApp : " + isApp + " style : " + style );
                     }
-                    if ( isBlackListName )
+                    if ( isFloatListName )
                     {
                         return TileMode.Float;
                     }

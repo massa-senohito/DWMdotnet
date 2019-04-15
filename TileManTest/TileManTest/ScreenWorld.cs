@@ -57,9 +57,11 @@ namespace TileManTest
         Rectangle ScreenGeom;
         // コピーならスキャン後やムーブ後
         OrderedDictionary<TagType , TagManager> TagClientDic = new OrderedDictionary<TagType, TagManager>( );
+        DebugLogger Logger;
 
         public ScreenWorld( Screen screen )
         {
+            Logger = new DebugLogger( "ScreenWorld " + screen.DeviceName );
             _Screen = screen;
             AdjacentScrenOffset = screen.Bounds.Left;
             ScreenGeom = screen.WorkingArea;
@@ -83,6 +85,7 @@ namespace TileManTest
         public void AddTag( int id )
         {
             var temp = new TagManager( new List<Client>() , id );
+            Logger.Debug( "AddTag" );
             TagClientDic.Add( id.ToString( ) , temp );
         }
 
@@ -106,7 +109,7 @@ namespace TileManTest
                     else
                     {
                         tagMan.RemoveIcon( j );
-                        DebugLogger.GlobalLogger.Warn( $"icon {j} removed illegal" );
+                        Logger.Warn( $"icon {j} removed illegal" );
                     }
                 }
             }
@@ -121,11 +124,17 @@ namespace TileManTest
                 {
                     yield return client;
                 }
-                client.UpdateScreen( );
-
             }
         }
 
+        public void UpdateScreen( TagType SelectedTag )
+        {
+            var clientList = ClientList( SelectedTag );
+            foreach ( var client in clientList )
+            {
+                client.UpdateScreen( );
+            }
+        }
 
 
         public TagManager Tag( string id )
@@ -210,10 +219,8 @@ namespace TileManTest
 
         void ResizeClient( Client c , int x , int y , int w , int h )
         {
-            Trace.WriteLine( $"{c.Title} rect : {c.Rect}" );
             Rectangle rect = new Rectangle( x , y , w , h );
             DWM.resize( c , rect.Left , rect.Top , rect.Width , rect.Height , ScreenGeom );
-            Trace.WriteLine( $"after {c.Title} rect : {c.Rect}" );
         }
 
         public void Tile(string selectedTag , int UIHeight)
@@ -229,7 +236,7 @@ namespace TileManTest
             masterWidth = onlyOne ? ScreenGeom.Width : masterWidth;
             ResizeClient( master , ScreenGeom.Left , ScreenGeom.Top + UIHeight ,
                 masterWidth , ScreenGeom.Height - UIHeight );
-            Trace.WriteLine( $"master {master.Title} : {master.Rect}" );
+            Logger.Info( $"master {master.Title} : {master.Rect}" );
             if ( onlyOne )
             {
                 return;
@@ -254,7 +261,7 @@ namespace TileManTest
                 bool isLastOne = ( i + 1 == slaveCount );
                 var height = isLastOne ? winGeom.Top + winGeom.Height - y - 2 * item.Bw : h - 2 * item.Bw;
                 ResizeClient( item , x , y , w - 2 * item.Bw , height );
-                Trace.WriteLine( $"slave {item.Title} : {item.Rect}" );
+                Logger.Info( $"slave {item.Title} : {item.Rect}" );
                 User32Methods.GetWindowRect( item.Hwnd , out var rect );
                 if ( !isLastOne )
                 {

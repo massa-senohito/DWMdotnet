@@ -29,6 +29,7 @@ namespace TileManTest
         void SetAllWindowFore();
         TagManager Tag( string id );
         void Tile( string selectedTag , int UIHeight );
+        void UpdateScreen( TagType SelectedTag );
         void Dump();
         string ToString();
     }

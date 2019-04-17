@@ -418,7 +418,7 @@ namespace TileManTest
         {
             var bui = new StringBuilder( );
             //foreach ( var tagMan in TagClientDic.Values )
-            foreach ( var tagMan in ScreenList[0].TagList )
+            foreach ( var tagMan in ScreenList.SelectMany(s=>s.TagList) )
             {
                 foreach ( var client in tagMan.ClientList )
                 {
@@ -481,7 +481,7 @@ namespace TileManTest
             CalcSlaveSizeFromMaster( );
 
             UpdateSlaveSize( );
-#if MultiScreen
+#if true
             var movedClientList = ScreenList.SelectMany(screen=> screen.MovedClients( SelectedTag ));
             UpdateClientScreen( movedClientList );
 
@@ -510,8 +510,17 @@ namespace TileManTest
                         fromWorld = inscreen;
                     }
                 }
-                toWorld.Tag( SelectedTag ).AddClient( movedClient );
-                fromWorld.Tag( SelectedTag ).RemoveClient( movedClient );
+
+                TagManager fromWorldTagManager = fromWorld.Tag( SelectedTag );
+                // 生成されたばかりのウィンドウの場合もmoveされ、マネージとここで2回分追加される
+                if ( fromWorldTagManager.HasClient( movedClient.Hwnd ) )
+                {
+
+                    fromWorldTagManager.RemoveClient( movedClient );
+                    TagManager toWorldTagManager = toWorld.Tag( SelectedTag );
+                    toWorldTagManager.AddClient( movedClient );
+                }
+;
             }
         }
 

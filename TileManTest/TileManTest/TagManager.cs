@@ -14,6 +14,8 @@ namespace TileManTest
     public class TagManager
     {
         public static int DefaultMasterWidth = 1056;
+        DebugLogger Logger;
+
         public TagManager( List<Client> clientlist , int id )
         {
             ClientList = clientlist;
@@ -21,6 +23,7 @@ namespace TileManTest
             ClientsAreVisible = true;
             IconList = new List<Icon>( );
             MasterWidth = DefaultMasterWidth;
+            Logger = new DebugLogger( "TagManager " + id.ToString() );
         }
 
         public List<Client> ClientList
@@ -97,10 +100,11 @@ namespace TileManTest
 
         public void AddClient( Client c )
         {
-            DebugLogger.GlobalLogger.Info( $"add {c.Title}" );
+            Logger.Info( $"add {c.Title}" );
             ClientList.Add( c );
             Icon item = Win32dll.GetAppIcon( c.Hwnd );
             IconList.Add( item );
+            Logger.Warn( $"all Client {ClientTitles.ToJson( ) }" );
         }
 
         public bool HasClient( IntPtr hwnd )
@@ -114,11 +118,12 @@ namespace TileManTest
             if ( mayInd != -1 )
             {
                 // アイコンが生成されないとインデックスが不一致になる
-                DebugLogger.GlobalLogger.Info( $"removed {client.Title}" );
+                Logger.Info( $"removed {client.Title}" );
                 ClientList.RemoveAt( mayInd );
                 var icon = IconList[ mayInd ];
                 RemoveIcon( mayInd );
                 icon?.Dispose( );
+                Logger.Warn( $"all Client {ClientTitles.ToJson( ) }" );
                 return true;
             }
             return false;
@@ -126,7 +131,7 @@ namespace TileManTest
 
         public void RemoveIcon( int ind )
         {
-            DebugLogger.GlobalLogger.Info( $"removedIcon {ind}" );
+            Logger.Info( $"removedIcon {ind}" );
             IconList.RemoveAt( ind );
         }
 

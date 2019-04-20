@@ -511,7 +511,12 @@ namespace TileManTest
                     }
                 }
 
-                TagManager fromWorldTagManager = fromWorld.Tag( SelectedTag );
+                // 一部のウィンドウはスクリーン名が空のときがあった
+                TagManager fromWorldTagManager = fromWorld?.Tag( SelectedTag );
+                if ( fromWorldTagManager == null )
+                {
+                    continue;
+                }
                 // 生成されたばかりのウィンドウの場合もmoveされ、マネージとここで2回分追加される
                 if ( fromWorldTagManager.HasClient( movedClient.Hwnd ) )
                 {

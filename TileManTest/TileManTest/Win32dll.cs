@@ -3,6 +3,7 @@ using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Text;
+using TileManTest;
 using WinApi.Gdi32;
 using WinApi.User32;
 
@@ -11,6 +12,7 @@ namespace MouseCaptureTest
     internal class Win32dll
     {
         public const int STRING_BUFFER_LENGTH = 1024;
+        static DebugLogger Logger = new DebugLogger( "Win32dll" );
 
         [DllImport( "user32.dll" , CallingConvention = CallingConvention.StdCall )]
         public static extern IntPtr WindowFromPoint( int x , int y );
@@ -139,7 +141,7 @@ namespace MouseCaptureTest
                 iconHandle = SendMessage( hwnd , WM_GETICON , ICON_SMALL , 0 );
             if ( iconHandle == IntPtr.Zero )
                 iconHandle = SendMessage( hwnd , WM_GETICON , ICON_BIG , 0 );
-            // -14だめっぽい
+            // -14だめなことがある
             if ( iconHandle == IntPtr.Zero )
                 iconHandle = GetClassLongPtr( hwnd , GCL_HICON );
             if ( iconHandle == IntPtr.Zero )
@@ -168,13 +170,22 @@ namespace MouseCaptureTest
             }
             else
             {
-                uint value = GetClassLongPtr32( hWnd , nIndex );
-                return new IntPtr( value );
+                try
+                {
+
+                    long value = GetClassLongPtr32( hWnd , nIndex );
+                    return new IntPtr( value );
+                }
+                catch(Exception ex)
+                {
+                    Logger.Error( ex.ToString( ) );
+                    return IntPtr.Zero;
+                }
             }
         }
 
         [DllImport( "user32.dll" , EntryPoint = "GetClassLong" )]
-        public static extern uint GetClassLongPtr32( IntPtr hWnd , int nIndex );
+        public static extern long GetClassLongPtr32( IntPtr hWnd , int nIndex );
 
         [DllImport( "user32.dll" , EntryPoint = "GetClassLongPtr" )]
         public static extern IntPtr GetClassLongPtr64( IntPtr hWnd , int nIndex );

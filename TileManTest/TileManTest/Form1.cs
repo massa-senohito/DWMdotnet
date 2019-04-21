@@ -29,13 +29,13 @@ namespace TileManTest
         uint ShellHookID;
         private List<HotKey> HotkeyList = new List<HotKey>( );
         RECT ScreenGeom;
-        RECT WindowGeom;
         int BarHeight;
         int BarY;
         bool TopBar = true;
         bool IsDirty = false;
         int UIHeight = 118;
         int ToggleHotID = 100;
+        int SortMaster = 101;
         string SelectedTag = "1";
 
         List<Client> SelectedClientList()
@@ -107,8 +107,8 @@ namespace TileManTest
                     Keys d0 = ( Keys )( ( int )Keys.D0 + i );
                     const Keys changeTag = Keys.Control ;
                     const Keys sendTag   = Keys.Control | Keys.Alt;
-                    var hotkeyNotify = new HotKey( this.Handle, i   , d0 , changeTag);
-                    var hotkeySend   = new HotKey( this.Handle, i + 10, d0 , sendTag);
+                    var hotkeyNotify = new HotKey( this.Handle, i      , d0 , changeTag);
+                    var hotkeySend   = new HotKey( this.Handle, i + 10 , d0 , sendTag);
                     HotkeyList.Add( hotkeyNotify );
                     HotkeyList.Add( hotkeySend );
 
@@ -119,6 +119,7 @@ namespace TileManTest
                     ClientTitleList[ i - 1 ].Click += Form1_SelectedIndexChanged;
                 }
                 HotkeyList.Add( new HotKey( Handle , ToggleHotID , Keys.H , Keys.Control ) );
+                HotkeyList.Add( new HotKey( Handle , SortMaster  , Keys.M , Keys.Control ) );
 
                 SetUp( );
                 ActiveClient = TryGetMaster( );
@@ -127,7 +128,7 @@ namespace TileManTest
                 ShellHookID = ThreadWindowHandles.RegisterWindowMessage( "SHELLHOOK" );
                 FormClosing += Form1_FormClosing;
                 Tile( );
-                Bounds = WindowGeom.Rect;
+                Bounds = ScreenGeom.Rect;
                 Height = UIHeight;
                 UpdateTimer = new Timer( );
                 UpdateTimer.Interval = 10;
@@ -262,6 +263,11 @@ namespace TileManTest
                     if ( item.ID == ToggleHotID )
                     {
                         Visible = !Visible;
+                        return;
+                    }
+                    if ( item.ID == SortMaster )
+                    {
+
                         return;
                     }
                     TagSignal( item );
@@ -411,7 +417,6 @@ namespace TileManTest
                 }
                 wh = ScreenGeom.Height - BarHeight;
             }
-            WindowGeom = new RECT( ScreenGeom );
         }
 
         private void UpdateClient()
@@ -446,6 +451,10 @@ namespace TileManTest
             uint procID = 0;
             label2.Text = wnd.ToString( );
             //label1.Text = SelectedClientList( ).Aggregate( "" , ( acc , c ) => acc + "\n" + c.Title );
+#if USEWINAPI
+            //IntPtr procPtr = IntPtr.Zero;
+            //uint procID2 = User32Methods.GetWindowThreadProcessId( wnd , procPtr );
+#endif
             Win32dll.GetWindowThreadProcessId( wnd , out procID );
             //wnd = Win32dll.OpenProcess( Win32dll.ProcessAccessFlags.QueryInformation | Win32dll.ProcessAccessFlags.VMRead | Win32dll.ProcessAccessFlags.Terminate , false , procID );
             //label3.Text = SelectedTag;
@@ -597,11 +606,6 @@ namespace TileManTest
 
         Client Manage( IntPtr hwnd , TileMode tileMode )
         {
-            //StringBuilder value = ThreadWindowHandles.GetWindowText( hwnd );
-            //if ( value != null )
-            //{
-            //    //Trace.WriteLine( value );
-            //}
 
             if ( ContainClient( hwnd ) )
             {
@@ -621,8 +625,8 @@ namespace TileManTest
 
                 if ( ThreadWindowHandles.IsWindowVisible( hwnd ) > 0 )
                 {
-                    NetCoreEx.Geometry.Rectangle windowRect = windowInfo.WindowRect;
-                    DWM.resize( client , windowRect.Left , windowRect.Top , windowRect.Width , windowRect.Height , WindowGeom.Rect );
+                    Rectangle windowRect = windowInfo.WindowRect;
+                    DWM.resize( client , windowRect.Left , windowRect.Top , windowRect.Width , windowRect.Height , ScreenGeom.Rect );
                 }
             }
             client.TileMode = tileMode;
@@ -647,7 +651,6 @@ namespace TileManTest
 
         private void Attach( Client client , string dest )
         {
-            //TagClientDic[ dest ].AddClient( client );
 #if MultiScreen
             foreach ( var screen in ScreenList )
             {
@@ -674,34 +677,12 @@ namespace TileManTest
             return true;
         }
 
-        void SetBorder( Client client , bool border )
-        {
-            if ( border )
-            {
-                var style = ( WindowStyles )User32Helpers.GetWindowLongPtr( client.Hwnd , WindowLongFlags.GWL_STYLE );
-                var titleAndScaleable = WindowStyles.WS_CAPTION | WindowStyles.WS_SIZEBOX;
-                User32Helpers.SetWindowLongPtr( client.Hwnd , WindowLongFlags.GWL_STYLE , ( IntPtr )( style | titleAndScaleable ) );
-            }
-            else
-            {
-                //User32Helpers.SetWindowLongPtr( client.Hwnd , WindowLongFlags.GWL_STYLE , ( IntPtr )( style | titleAndScaleable ) );
-
-            }
-        }
-
         void SetUp()
         {
             User32Methods.EnumWindows( Scan , IntPtr.Zero );
             IsDirty = true;
         }
 
-        void SetupBar()
-        {
-            //var font = Gdi32Helpers.GetStockObject( StockObject.SYSTEM_FONT );
-            //ThreadWindowHandles.SelectObject( Handle , font );
-            //blw直書きなので
-
-        }
 
         TileMode IsManageable( IntPtr hwnd )
         {
@@ -737,6 +718,15 @@ namespace TileManTest
                 return TileMode.Tile;
             }
 #endif
+            if ( User32Methods.GetWindowPlacement( hwnd , out WindowPlacement windowPlacement ) )
+            {
+                if ( (windowPlacement.ShowCmd & ShowWindowCommands.SW_HIDE) != 0 )
+                {
+                    return TileMode.NoHandle;
+                }
+            }
+
+
             var parent = ThreadWindowHandles.GetParent( hwnd );
             var owner = User32Helpers.GetWindow( hwnd , GetWindowFlag.GW_OWNER );
             WindowStyles style = WindowStyle( hwnd );
@@ -818,54 +808,6 @@ namespace TileManTest
                 screen.Tile( SelectedTag , UIHeight );
                 Trace.Unindent( );
             }
-#if OLDTILE
-            List<Client> clientList = SelectedTiledClient( );
-            if ( clientList.Count == 0 )
-            {
-                return;
-            }
-            var master = clientList.First( );
-            RECT winGeom = WindowGeom;
-            // MasterWidthとどのスクリーン化だけ覚えておくほうが
-            var masterWidth = CurrentTag.MasterWidth;//MasterFact * winGeom.Width;
-
-            bool onlyOne = clientList.Count == 1;
-            float width = ( onlyOne ? winGeom.Width : masterWidth ) - ( 2 * master.Bw );
-            ResizeClient( master , winGeom.Left , winGeom.Top + UIHeight ,
-                ( int )width , winGeom.Height - UIHeight - 2 * master.Bw );
-            if ( onlyOne )
-            {
-                return;
-            }
-            var x = master.Rect.X + master.Rect.Width;
-            int y = winGeom.Top + UIHeight;
-            var w = winGeom.Left + winGeom.Width - ( int )width;
-            var h = ( WindowGeom.Height - UIHeight ) / clientList.Count;
-            if ( h < BarHeight )
-            {
-                h = winGeom.Height;
-            }
-            var slaveList = SlaveList( );
-            var ver = Environment.OSVersion.Version.Major;
-            int slaveCount = slaveList.Count;
-            if ( ver > 5 )
-            {
-
-            }
-            for ( int i = 0 ; i < slaveCount ; i++ )
-            {
-
-                var item = slaveList[ i ];
-                bool isLastOne = ( i + 1 == slaveCount );
-                var height = isLastOne ? winGeom.Top + winGeom.Height - y - 2 * item.Bw : h - 2 * item.Bw;
-                ResizeClient( item , x , y , w - 2 * item.Bw , height );
-                User32Methods.GetWindowRect( item.Hwnd , out Rectangle rect );
-                if ( !isLastOne )
-                {
-                    y = item.Rect.Top + rect.Height;
-                }
-            }
-#endif
         }
 
         private Client TryGetMaster( )
@@ -906,7 +848,7 @@ namespace TileManTest
         void UpdateBar()
         {
             User32Helpers.SetWindowPos( Handle , HwndZOrder.HWND_TOPMOST 
-                , 0 , BarY , WindowGeom.Width , BarHeight ,
+                , 0 , BarY , ScreenGeom.Width , BarHeight ,
                 WindowPositionFlags.SWP_SHOWWINDOW | WindowPositionFlags.SWP_NOACTIVATE | WindowPositionFlags.SWP_NOSENDCHANGING );
         }
 

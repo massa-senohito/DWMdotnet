@@ -64,7 +64,7 @@ namespace TileManTest
     {
         public List<string> NoTilingList = new List<string>( );
 
-        private bool HasTarget( List<string> list , IntPtr hwnd )
+        private static bool HasTarget( List<string> list , IntPtr hwnd )
         {
             var title = ThreadWindowHandles.GetWindowText( hwnd );
             var classText = ThreadWindowHandles.GetClassText( hwnd );
@@ -98,9 +98,14 @@ namespace TileManTest
             return true;
         }
 
+        List<string> IgnoreTargetList = new List<string>( )
+        {
+            "Everything",
+        };
+
         public bool IsBlackTarget( IntPtr hwnd )
         {
-            return HasTarget( new List<string>( ) { "Hwnd" } , hwnd );
+            return HasTarget( IgnoreTargetList , hwnd );
         }
 
         public string ToJson()

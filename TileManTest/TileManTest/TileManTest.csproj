@@ -225,6 +225,7 @@
     <Compile Include="ScreenWorld.cs" />
     <Compile Include="TagManager.cs" />
     <Compile Include="TileSetting.cs" />
+    <Compile Include="TileWindowManager.cs" />
     <Compile Include="Win32dll.cs" />
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>

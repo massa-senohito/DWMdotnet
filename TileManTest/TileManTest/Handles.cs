@@ -254,20 +254,6 @@ namespace Handles
 [DllImport("user32.dll", SetLastError = true)]
 public static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int nHeight, bool bRepaint);
 
-        [DllImport( "user32.dll" )]
-        [return: MarshalAs( UnmanagedType.Bool )]
-        static extern bool GetWindowPlacement( IntPtr hWnd , ref WINDOWPLACEMENT lpwndpl );
-
-        private struct WINDOWPLACEMENT
-        {
-            public int length;
-            public int flags;
-            public int showCmd;
-            public System.Drawing.Point ptMinPosition;
-            public System.Drawing.Point ptMaxPosition;
-            public RECT rcNormalPosition;
-        }
-
         //        BOOL GetWindowRect(
         //            HWND hWnd,      // ウィンドウのハンドル
         //            LPRECT lpRect   // ウィンドウの座標値

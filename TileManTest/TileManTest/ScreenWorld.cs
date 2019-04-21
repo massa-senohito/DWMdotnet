@@ -127,6 +127,11 @@ namespace TileManTest
             }
         }
 
+        public void SortMaster( Client NextMaster )
+        {
+
+        }
+
         public void UpdateScreen( TagType SelectedTag )
         {
             var clientList = ClientList( SelectedTag );

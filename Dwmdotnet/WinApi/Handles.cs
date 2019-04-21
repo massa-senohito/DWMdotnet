@@ -146,11 +146,6 @@ namespace Handles
         public static extern bool SystemParametersInfoGet(
             uint action , uint param , ref RECT vparam , uint init );
 
-        [DllImport( "User32.dll" )]
-        public static extern int SetForegroundWindow(
-              IntPtr hWnd
-              );
-
         [DllImport( "user32.dll" , ExactSpelling = true , CharSet = CharSet.Auto )]
         public static extern IntPtr GetParent( IntPtr hWnd );
 

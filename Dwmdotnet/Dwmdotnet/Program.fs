@@ -9,6 +9,7 @@ namespace DWMDotnet
     open System
     open System.Collections.Generic
     open System.Drawing
+    open WinApi.User32
 
     type Native = ThreadWindowHandles
     type HWND       = IntPtr
@@ -40,7 +41,7 @@ namespace DWMDotnet
 
     let focus (client:Client) =
       
-      ThreadWindowHandles.SetForegroundWindow(client.Hwnd)
+      User32Methods.SetForegroundWindow(client.Hwnd)
 
     let setVisibility hwnd visiblity =
       let visibleFlag = if visiblity then SWP.SHOWWINDOW else SWP.HIDEWINDOW

@@ -166,7 +166,7 @@ namespace MouseCaptureTest
         {
             if ( IntPtr.Size > 4 )
             {
-                return GetClassLongPtr64( hWnd , nIndex );
+                return GetClassLongPtr64( new HandleRef (hWnd , hWnd) , nIndex );
             }
             else
             {
@@ -174,7 +174,14 @@ namespace MouseCaptureTest
                 {
 
                     long value = GetClassLongPtr32( hWnd , nIndex );
-                    return new IntPtr( value );
+                    if ( value < Int32.MaxValue )
+                    {
+                        return new IntPtr( value );
+                    }
+                    else
+                    {
+                        return IntPtr.Zero;
+                    }
                 }
                 catch(Exception ex)
                 {
@@ -188,7 +195,7 @@ namespace MouseCaptureTest
         public static extern long GetClassLongPtr32( IntPtr hWnd , int nIndex );
 
         [DllImport( "user32.dll" , EntryPoint = "GetClassLongPtr" )]
-        public static extern IntPtr GetClassLongPtr64( IntPtr hWnd , int nIndex );
+        public static extern IntPtr GetClassLongPtr64( HandleRef hWnd , int nIndex );
 
         [DllImport( "user32.dll" , CharSet = CharSet.Auto , SetLastError = false )]
         static extern IntPtr SendMessage( IntPtr hWnd , int Msg , int wParam , int lParam );

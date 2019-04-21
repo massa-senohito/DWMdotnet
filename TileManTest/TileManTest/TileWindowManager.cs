@@ -142,11 +142,14 @@ namespace TileManTest
                 CurrentTag.MasterWidth = TagManager.DefaultMasterWidth;
             }
 
+            // なんかきいてない気がする
             foreach ( var screen in ScreenList )
             {
                 screen.SetAllWindowFore( );
             }
+            
             SelectedTag = nextTag;
+            CurrentTag.ResetIcon( );
             Tile( );
         }
 

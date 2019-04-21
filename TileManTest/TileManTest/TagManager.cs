@@ -107,6 +107,16 @@ namespace TileManTest
             Logger.Warn( $"all Client {ClientTitles.ToJson( ) }" );
         }
 
+        public void ResetIcon()
+        {
+            IconList.Clear( );
+            foreach ( var c in ClientList )
+            {
+                Icon item = Win32dll.GetAppIcon( c.Hwnd );
+                IconList.Add( item );
+            }
+        }
+
         public bool HasClient( IntPtr hwnd )
         {
             return ClientList.Any( c => c.Hwnd == hwnd );

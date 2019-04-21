@@ -197,7 +197,7 @@ namespace TileManTest
         {
             ForeachClient( c =>
              {
-                 ThreadWindowHandles.SetForegroundWindow( c.Hwnd );
+                 User32Methods.SetForegroundWindow( c.Hwnd );
                  return false;
              } );
         }

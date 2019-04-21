@@ -32,58 +32,25 @@ namespace TileManTest
         int BarHeight;
         int BarY;
         bool TopBar = true;
-        bool IsDirty = false;
         int UIHeight = 118;
         int ToggleHotID = 100;
         int SortMaster = 101;
-        string SelectedTag = "1";
 
-        List<Client> SelectedClientList()
-        {
-            List<Client> tmp = new List<Client>( );
-            foreach ( var screen in ScreenList )
-            {
-
-                IEnumerable<Client> collection = screen.ClientList( SelectedTag );
-                tmp.AddRange( collection );
-            }
-            return tmp;
-        }
-
-        List<Client> SelectedTiledClient()
-        {
-            return SelectedClientList( ).Where( c => c.TileMode == TileMode.Tile ).ToList();
-        }
-
-        List<IScreenWorld> ScreenList = new List<IScreenWorld>( );
         List<ListBox> ClientTitleList;
 
         const string SettingPath = "TileSetting.txt";
         TileSetting _TileSetting ;
         DebugLogger Logger;
+        TileWindowManager WindowManager;
 
-        void ChangeMaster( Client client )
-        {
-            List<Client> list = SelectedClientList( );
-            var nextMaster = list.Find( c => c == client );
-            List<Client> clientList = list;
-            clientList.Remove( client );
-            clientList.Reverse( );
-            clientList.Add( client );
-            clientList.Reverse( );
-        }
 
         public Form1()
         {
             Logger = new DebugLogger( "Form1" );
             _TileSetting = TileSetting.Load( SettingPath );
-            var scrList = Screen.AllScreens;
-            foreach ( var screen in scrList )
-            {
-                Trace.WriteLine( screen.DeviceName + " " + screen.Bounds );
-                ScreenList.Add( ScreenWorld.CreateScreenWorld( screen ) );
-                // https://stackoverflow.com/questions/53012896/using-setwindowpos-with-multiple-monitors
-            }
+
+            WindowManager = new TileWindowManager(UIHeight );
+
 
             try
             {
@@ -112,7 +79,7 @@ namespace TileManTest
                     HotkeyList.Add( hotkeyNotify );
                     HotkeyList.Add( hotkeySend );
 
-                    foreach ( var screen in ScreenList )
+                    foreach ( var screen in WindowManager.ScreenList )
                     {
                         screen.AddTag( i );
                     }
@@ -122,12 +89,12 @@ namespace TileManTest
                 HotkeyList.Add( new HotKey( Handle , SortMaster  , Keys.M , Keys.Control ) );
 
                 SetUp( );
-                ActiveClient = TryGetMaster( );
+                WindowManager.ActiveClient = WindowManager.TryGetMaster( );
                 UpdateGeom( );
                 ThreadWindowHandles.RegisterShellHookWindow( Handle );
                 ShellHookID = ThreadWindowHandles.RegisterWindowMessage( "SHELLHOOK" );
                 FormClosing += Form1_FormClosing;
-                Tile( );
+                WindowManager.Tile( );
                 Bounds = ScreenGeom.Rect;
                 Height = UIHeight;
                 UpdateTimer = new Timer( );
@@ -136,7 +103,7 @@ namespace TileManTest
                 UpdateTimer.Start( );
                 Paint += Form1_Paint;
                 // 狭いスクリーンだとquitがなくなることがある
-                var widestScr = scrList.OrderBy( s => s.WorkingArea.Width ).Last( );
+                var widestScr = Screen.AllScreens.OrderBy( s => s.WorkingArea.Width ).Last( );
                 Location = widestScr.Bounds.Location;
             }
             catch ( Exception ex )
@@ -148,7 +115,7 @@ namespace TileManTest
 
         private void Form1_Paint( object sender , PaintEventArgs e )
         {
-            foreach ( var item in ScreenList )
+            foreach ( var item in WindowManager.ScreenList )
             {
                 item.PaintIcon( ClientTitleList , e );
             }
@@ -159,28 +126,20 @@ namespace TileManTest
             var listBox = sender as ListBox;
             var newTag  = listBox.Name.Last( ).ToString();
             //ChangeTag( TagClientDic[ SelectedTag.ToString( ) ] , newTag );
-            ChangeTag( CurrentTag , newTag );
-            SelectedTag = newTag;
+            WindowManager.ChangeTag( WindowManager.CurrentTag , newTag );
+            WindowManager.SelectedTag = newTag;
             int selectedInd = listBox.SelectedIndex;
             //label3.Text = listBox.Name + " " + selectedInd.ToString();
             if ( selectedInd != ListBox.NoMatches )
             {
                 User32Methods.SetForegroundWindow(
-                SelectedClientList( )[ selectedInd ].Hwnd );
-            }
-        }
-
-        private TagManager CurrentTag
-        {
-            get
-            {
-                return ScreenList[ 0 ].Tag( SelectedTag );
+                WindowManager.SelectedClientList( )[ selectedInd ].Hwnd );
             }
         }
 
         private void CleanUp()
         {
-            foreach ( var screen in ScreenList )
+            foreach ( var screen in WindowManager.ScreenList )
             {
                 screen.CleanUp( );
             }
@@ -270,68 +229,15 @@ namespace TileManTest
 
                         return;
                     }
-                    TagSignal( item );
+                    WindowManager.TagSignal( item );
                 }
             }
         }
 
-        Client ActiveClient;
 
-        private void TagSignal( HotKey item )
-        {
-            bool send = 9 < item.ID;
-            TagManager currentTag = CurrentTag;
-            string itemID = item.ID.ToString( );
-            int sentDest = item.ID - 10;
-            // 同じタグなら再度入らないように
-            if ( sentDest.ToString() == SelectedTag )
-            {
-                return;
-            }
-            if ( send )
-            {
-                if ( ActiveClient != null )
-                {
-                    IsDirty = true;
-                    DWM.setClientVisibility( ActiveClient , false );
-                    currentTag.RemoveClient( ActiveClient );
-                    Attach( ActiveClient , sentDest.ToString( ) );
-                    Tile( );
-                    ActiveClient = TryGetMaster( );
-                }
-            }
-            else
-            {
-                ChangeTag( currentTag , itemID );
-            }
-        }
 
-        private void ChangeTag( TagManager currentTag , string nextTag )
-        {
-            if ( nextTag == SelectedTag )
-            {
-                return;
-            }
-            ActiveClient = null;
-            // 移動前にマスターの長さを保存
-            CurrentTag.MasterWidth = TryGetMaster( )?.W ?? TagManager.DefaultMasterWidth;
-            foreach ( var screen in ScreenList )
-            {
-                screen.ChangeTag( currentTag , nextTag );
-            }
-            // master1つなら大きさはスクリーンサイズになる、するとスレイブの大きさが0になってしまうので
-            if ( CurrentTag.MasterWidth == ScreenGeom.Width )
-            {
-                CurrentTag.MasterWidth = TagManager.DefaultMasterWidth;
-            }
 
-            foreach ( var screen in ScreenList )
-            {
-                screen.SetAllWindowFore( );
-            }
-            SelectedTag = nextTag;
-            Tile( );
-        }
+
 
         private void OtherWindow( System.Windows.Forms.Message m , WM param , Client client )
         {
@@ -344,7 +250,7 @@ namespace TileManTest
                     {
                         var newClient = Manage( m.LParam , tileMode );
                         // とりあえず子ウィンドウはスルー
-                        Tile( );
+                        WindowManager.Tile( );
                     }
                     Trace.WriteLine( "created :" + ThreadWindowHandles.GetWindowText( m.LParam ) );
 
@@ -359,7 +265,7 @@ namespace TileManTest
                         {
 
                             Unmanage( client );
-                            Tile( );
+                            WindowManager.Tile( );
                         }
                         else
                         {
@@ -371,7 +277,7 @@ namespace TileManTest
                 case WM.HSHELL_RUDEAPPACTIVATED:
                     if ( client != null )
                     {
-                        ActiveClient = client;
+                        WindowManager.ActiveClient = client;
                         Trace.WriteLine( "active : " + ThreadWindowHandles.GetWindowText( m.LParam ) );
                     }
                     break;
@@ -417,20 +323,22 @@ namespace TileManTest
                 }
                 wh = ScreenGeom.Height - BarHeight;
             }
+            // ここ全体 TileWindowManagerに持っていきたい
+            WindowManager.ScreenGeom = ScreenGeom;
         }
 
         private void UpdateClient()
         {
             var bui = new StringBuilder( );
             //foreach ( var tagMan in TagClientDic.Values )
-            foreach ( var tagMan in ScreenList.SelectMany(s=>s.TagList) )
+            foreach ( var tagMan in WindowManager.ScreenList.SelectMany(s=>s.TagList) )
             {
                 foreach ( var client in tagMan.ClientList )
                 {
                     bui.Append( $"{client.Title} y = {client.Rect.Y} h = {client.Rect.Height}\n" );
                     if ( client.HasTitleUpdate( ) )
                     {
-                        IsDirty = true;
+                        WindowManager.IsDirty = true;
                         return;
                     }
                 }
@@ -468,14 +376,14 @@ namespace TileManTest
             //}
             UpdateClient( );
 
-            if ( IsDirty )
+            if ( WindowManager.IsDirty )
             {
 #if MultiScreen
                 foreach ( var screen in ScreenList )
                 {
                     foreach ( var tagMan in screen.TagList )
 #else
-                    foreach ( var tagMan in ScreenList[0].TagList )
+                    foreach ( var tagMan in WindowManager.ScreenList[0].TagList )
 #endif
                     {
                         UpdateTitle( tagMan );
@@ -484,19 +392,19 @@ namespace TileManTest
                 }
 #endif
                 Invalidate( );
-                IsDirty = false;
+                WindowManager.IsDirty = false;
             }
 
             CalcSlaveSizeFromMaster( );
 
             UpdateSlaveSize( );
 #if true
-            var movedClientList = ScreenList.SelectMany(screen=> screen.MovedClients( SelectedTag ));
+            var movedClientList = WindowManager.ScreenList.SelectMany(screen=> screen.MovedClients( WindowManager.SelectedTag ));
             UpdateClientScreen( movedClientList );
 
-            foreach ( var screen in ScreenList )
+            foreach ( var screen in WindowManager.ScreenList )
             {
-                screen.UpdateScreen( SelectedTag );
+                screen.UpdateScreen( WindowManager.SelectedTag );
             }
 #endif
         }
@@ -508,7 +416,7 @@ namespace TileManTest
             {
                 IScreenWorld fromWorld = null;
                 IScreenWorld toWorld = null;
-                foreach ( var inscreen in ScreenList )
+                foreach ( var inscreen in WindowManager.ScreenList )
                 {
                     if ( inscreen.IsSameScreen( movedClient.Screen ) )
                     {
@@ -521,7 +429,7 @@ namespace TileManTest
                 }
 
                 // 一部のウィンドウはスクリーン名が空のときがあった
-                TagManager fromWorldTagManager = fromWorld?.Tag( SelectedTag );
+                TagManager fromWorldTagManager = fromWorld?.Tag( WindowManager.SelectedTag );
                 if ( fromWorldTagManager == null )
                 {
                     continue;
@@ -531,7 +439,7 @@ namespace TileManTest
                 {
 
                     fromWorldTagManager.RemoveClient( movedClient );
-                    TagManager toWorldTagManager = toWorld.Tag( SelectedTag );
+                    TagManager toWorldTagManager = toWorld.Tag( WindowManager.SelectedTag );
                     toWorldTagManager.AddClient( movedClient );
                 }
 ;
@@ -551,7 +459,7 @@ namespace TileManTest
 
         private void CalcSlaveSizeFromMaster()
         {
-            Client masterClient = TryGetMaster( );
+            Client masterClient = WindowManager.TryGetMaster( );
             if ( masterClient == null )
             {
                 return;
@@ -568,7 +476,7 @@ namespace TileManTest
 
         IScreenWorld FindScreen( Screen screen )
         {
-            foreach ( var item in ScreenList )
+            foreach ( var item in WindowManager.ScreenList )
             {
                 if ( item.IsSameScreen(screen) )
                 {
@@ -581,7 +489,7 @@ namespace TileManTest
 
         private void ArrangeIfScreenChanged()
         {
-            foreach ( var client in SelectedClientList() )
+            foreach ( var client in WindowManager.SelectedClientList() )
             {
                 if ( client.ScreenChanged )
                 {
@@ -593,7 +501,7 @@ namespace TileManTest
         Client GetClient( IntPtr hwnd )
         {
             //foreach ( var item in TagClientDic.Values )
-            foreach ( var tagMan in ScreenList[0].TagList )
+            foreach ( var tagMan in WindowManager.ScreenList[0].TagList )
             {
                 var foundItem = tagMan.TryGetClient( hwnd );
                 if ( foundItem != null )
@@ -631,7 +539,7 @@ namespace TileManTest
             }
             client.TileMode = tileMode;
 
-            Attach( client , SelectedTag );
+            WindowManager.Attach( client , WindowManager.SelectedTag );
             return client;
         }
 
@@ -649,22 +557,6 @@ namespace TileManTest
             return client;
         }
 
-        private void Attach( Client client , string dest )
-        {
-#if MultiScreen
-            foreach ( var screen in ScreenList )
-            {
-                if ( screen.IsSameScreen( client.Screen ) )
-                {
-                    screen.Attach( client , dest );
-                }
-            }
-#else
-            ScreenList[ 0 ].Attach( client , dest );
-#endif
-            IsDirty = true;
-        }
-
         bool Scan( IntPtr hwnd , IntPtr lParam )
         {
             TileMode tileMode = IsManageable( hwnd );
@@ -680,7 +572,7 @@ namespace TileManTest
         void SetUp()
         {
             User32Methods.EnumWindows( Scan , IntPtr.Zero );
-            IsDirty = true;
+            WindowManager.IsDirty = true;
         }
 
 
@@ -780,7 +672,7 @@ namespace TileManTest
         private bool ContainClient( IntPtr hwnd )
         {
             //foreach ( var item in TagClientDic.Values )
-            foreach ( var tagMan in ScreenList[0].TagList )
+            foreach ( var tagMan in WindowManager.ScreenList[0].TagList )
             {
                 bool contains = tagMan.HasClient( hwnd );
                 if ( contains )
@@ -799,27 +691,9 @@ namespace TileManTest
             Trace.WriteLine( $"after {c.Title} rect : {c.Rect}" );
         }
 
-        void Tile()
-        {
-            foreach ( var screen in ScreenList )
-            {
-                Trace.WriteLine( $"Tile() {screen}" );
-                Trace.Indent( );
-                screen.Tile( SelectedTag , UIHeight );
-                Trace.Unindent( );
-            }
-        }
-
-        private Client TryGetMaster( )
-        {
-            var master = SelectedTiledClient( ).FirstOrDefault( );
-            //Trace.WriteLine( master?.Title );
-            return master;
-        }
-
         private List<Client> SlaveList( )
         {
-            return SelectedTiledClient( ).Skip( 1 ).ToList( );
+            return WindowManager.SelectedTiledClient( ).Skip( 1 ).ToList( );
         }
 
         void Unmanage( Client client )
@@ -831,14 +705,14 @@ namespace TileManTest
         private void Detach( Client client )
         {
             //foreach ( var item in TagClientDic.Values )
-            foreach ( var screen in ScreenList )
+            foreach ( var screen in WindowManager.ScreenList )
             {
                 foreach ( var tagMan in screen.TagList )
                 {
                     var contains = tagMan.RemoveClient( client );
                     if ( contains )
                     {
-                        IsDirty = true;
+                        WindowManager.IsDirty = true;
                         return;
                     }
                 }
@@ -854,7 +728,7 @@ namespace TileManTest
 
         private void QuitButton_Click( object sender , EventArgs e )
         {
-            foreach ( var screen in ScreenList )
+            foreach ( var screen in WindowManager.ScreenList )
             {
 
                 foreach ( var tagMan in screen.TagList )

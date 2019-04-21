@@ -127,9 +127,10 @@ namespace TileManTest
             }
         }
 
-        public void SortMaster( Client NextMaster )
+        public void SortMaster( Client NextMaster , TagType SelectedTag )
         {
-
+            var tagMan = Tag( SelectedTag );
+            tagMan.SortMaster( NextMaster );
         }
 
         public void UpdateScreen( TagType SelectedTag )

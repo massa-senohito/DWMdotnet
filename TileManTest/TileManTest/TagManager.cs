@@ -112,6 +112,11 @@ namespace TileManTest
             return ClientList.Any( c => c.Hwnd == hwnd );
         }
 
+        public bool HasClient( Client client)
+        {
+            return ClientList.Any( c => c.Hwnd == client.Hwnd );
+        }
+
         public bool RemoveClient( Client client )
         {
             var mayInd = ClientList.FindIndex( c => c.Hwnd == client.Hwnd );
@@ -127,6 +132,21 @@ namespace TileManTest
                 return true;
             }
             return false;
+        }
+
+        public void SortMaster( Client nextMaster )
+        {
+            if ( !HasClient( nextMaster ) )
+            {
+                return;
+            }
+            var index = ClientList.IndexOf( nextMaster );
+
+            ClientList.RemoveAt( index );
+            var oldMaster = ClientList[ 0 ];
+            ClientList.RemoveAt( 0 );
+            ClientList.Insert( 0 , nextMaster );
+            ClientList.Insert( index , oldMaster );
         }
 
         public void RemoveIcon( int ind )

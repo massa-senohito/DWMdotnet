@@ -11,14 +11,9 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
-using Whitebell.Library.Collections.Generic;
 using WinApi.Gdi32;
 using WinApi.User32;
-using static MouseCaptureTest.Win32dll;
 using static Types;
-using TagType = System.String;
-using DrawRectangle = System.Drawing.Rectangle;
-using System.IO;
 
 namespace TileManTest
 {
@@ -43,14 +38,12 @@ namespace TileManTest
         DebugLogger Logger;
         TileWindowManager WindowManager;
 
-
         public Form1()
         {
             Logger = new DebugLogger( "Form1" );
             _TileSetting = TileSetting.Load( SettingPath );
 
-            WindowManager = new TileWindowManager(UIHeight );
-
+            WindowManager = new TileWindowManager( UIHeight );
 
             try
             {
@@ -97,6 +90,7 @@ namespace TileManTest
                 WindowManager.Tile( );
                 Bounds = ScreenGeom.Rect;
                 Height = UIHeight;
+
                 UpdateTimer = new Timer( );
                 UpdateTimer.Interval = 10;
                 UpdateTimer.Tick += T_Tick;
@@ -226,18 +220,13 @@ namespace TileManTest
                     }
                     if ( item.ID == SortMaster )
                     {
-
+                        WindowManager.SortMaster( );
                         return;
                     }
                     WindowManager.TagSignal( item );
                 }
             }
         }
-
-
-
-
-
 
         private void OtherWindow( System.Windows.Forms.Message m , WM param , Client client )
         {

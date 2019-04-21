@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using static Types;
@@ -13,6 +12,7 @@ namespace TileManTest
 {
     class TileWindowManager
     {
+        // Variable
 
         public Client ActiveClient
         {
@@ -22,15 +22,11 @@ namespace TileManTest
         public List<IScreenWorld> ScreenList = new List<IScreenWorld>( );
         public string SelectedTag = "1";
         public bool IsDirty = false;
-        public TagManager CurrentTag
-        {
-            get
-            {
-                return ScreenList[ 0 ].Tag( SelectedTag );
-            }
-        }
+
         public int UIHeight ;
         public RECT ScreenGeom;
+
+        // Methods
 
         public TileWindowManager(int uiHeight)
         {
@@ -61,6 +57,14 @@ namespace TileManTest
             return SelectedClientList( ).Where( c => c.TileMode == TileMode.Tile ).ToList();
         }
 
+        public TagManager CurrentTag
+        {
+            get
+            {
+                return ScreenList[ 0 ].Tag( SelectedTag );
+            }
+        }
+
         void ChangeMaster( Client client )
         {
             List<Client> list = SelectedClientList( );
@@ -72,13 +76,26 @@ namespace TileManTest
             clientList.Reverse( );
         }
 
+        public void SortMaster()
+        {
+            if ( ActiveClient == null )
+            {
+                return;
+            }
+            foreach ( var screen in ScreenList )
+            {
+                screen.SortMaster( ActiveClient , SelectedTag );
+            }
+            Tile( );
+            IsDirty = true;
+        }
+
         public void TagSignal( HotKey item )
         {
             bool send = 9 < item.ID;
-            TagManager currentTag = CurrentTag;
             string itemID = item.ID.ToString( );
             int sentDest = item.ID - 10;
-            // 同じタグなら再度入らないように
+            // 同じタグなら変更入らないように
             if ( sentDest.ToString() == SelectedTag )
             {
                 return;
@@ -89,7 +106,7 @@ namespace TileManTest
                 {
                     IsDirty = true;
                     DWM.setClientVisibility( ActiveClient , false );
-                    currentTag.RemoveClient( ActiveClient );
+                    CurrentTag.RemoveClient( ActiveClient );
                     Attach( ActiveClient , sentDest.ToString( ) );
                     Tile( );
                     ActiveClient = TryGetMaster( );
@@ -97,7 +114,7 @@ namespace TileManTest
             }
             else
             {
-                ChangeTag( currentTag , itemID );
+                ChangeTag( CurrentTag , itemID );
             }
         }
 
@@ -145,6 +162,7 @@ namespace TileManTest
             //Trace.WriteLine( master?.Title );
             return master;
         }
+
         public void Attach( Client client , string dest )
         {
 #if MultiScreen

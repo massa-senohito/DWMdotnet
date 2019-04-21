@@ -87,7 +87,6 @@ namespace TileManTest
                 ThreadWindowHandles.RegisterShellHookWindow( Handle );
                 ShellHookID = ThreadWindowHandles.RegisterWindowMessage( "SHELLHOOK" );
                 FormClosing += Form1_FormClosing;
-                WindowManager.Tile( );
                 Bounds = ScreenGeom.Rect;
                 Height = UIHeight;
 
@@ -99,6 +98,8 @@ namespace TileManTest
                 // 狭いスクリーンだとquitがなくなることがある
                 var widestScr = Screen.AllScreens.OrderBy( s => s.WorkingArea.Width ).Last( );
                 Location = widestScr.Bounds.Location;
+                WindowManager.BelongScreen = Screen.FromHandle( Handle );
+                WindowManager.Tile( );
             }
             catch ( Exception ex )
             {

@@ -25,10 +25,15 @@ namespace TileManTest
 
         public int UIHeight ;
         public RECT ScreenGeom;
+        public Screen BelongScreen
+        {
+            get;
+            set;
+        }
 
         // Methods
 
-        public TileWindowManager(int uiHeight)
+        public TileWindowManager( int uiHeight )
         {
             var scrList = Screen.AllScreens;
             foreach ( var screen in scrList )
@@ -151,7 +156,12 @@ namespace TileManTest
             {
                 Trace.WriteLine( $"Tile() {screen}" );
                 Trace.Indent( );
-                screen.Tile( SelectedTag , UIHeight );
+                int heightOffset = 0;
+                if ( screen.IsSameScreen( BelongScreen ) )
+                {
+                    heightOffset = UIHeight;
+                }
+                screen.Tile( SelectedTag , heightOffset );
                 Trace.Unindent( );
             }
         }

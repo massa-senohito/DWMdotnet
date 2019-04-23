@@ -89,12 +89,24 @@ namespace TileManTest
             TagClientDic.Add( id.ToString( ) , temp );
         }
 
-        public void PaintIcon( List<ListBox> clientTitleList, PaintEventArgs e )
+        public void PaintIcon( List<ListBox> clientTitleList, PaintEventArgs e , TagType SelectedTag)
         {
+            int intTag = int.Parse( SelectedTag );
             for ( int i = 0 ; i < TagClientDic.Count ; i++ )
             {
                 var tagMan = TagClientDic.ElementAt( i ).Value;
                 var listBox = clientTitleList[ i ];
+                // 現在のタグの上に今のタグを確認するための青い四角を書く
+                // todo コンストラクタでリストボックス受け取りたい
+                if ( i + 1 == intTag )
+                {
+                    Rectangle bounds = listBox.Bounds;
+                    int x = bounds.X;
+                    int y = 0;
+                    int w = bounds.Width;
+                    int h = 12;
+                    e.Graphics.FillRectangle( new SolidBrush( Color.FromArgb( 63 , 72 , 204 ) ) , x , y , w , h );
+                }
                 List<Icon> iconList = tagMan.IconList;
                 for ( int j = 0 ; j < iconList.Count ; j++ )
                 {
@@ -254,12 +266,8 @@ namespace TileManTest
             var h = (ScreenGeom.Height - UIHeight) / tiledClient.Count;
 
             var slaveList = tiledClient.Skip( 1 ).ToList( );
-            var ver = Environment.OSVersion.Version.Major;
             int slaveCount = slaveList.Count;
-            if ( ver > 5 )
-            {
 
-            }
             for ( int i = 0 ; i < slaveCount ; i++ )
             {
 

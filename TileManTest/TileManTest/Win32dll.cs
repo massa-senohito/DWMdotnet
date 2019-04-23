@@ -162,6 +162,15 @@ namespace MouseCaptureTest
 
         public const int WM_GETICON = 0x7F;
 
+        public static bool IsWin10
+        {
+            get
+            {
+                var ver = Environment.OSVersion.Version.Major;
+                return ver > 5;
+            }
+        }
+
         public static IntPtr GetClassLongPtr( IntPtr hWnd , int nIndex )
         {
             if ( IntPtr.Size > 4 )
@@ -174,6 +183,10 @@ namespace MouseCaptureTest
                 {
 
                     long value = GetClassLongPtr32( hWnd , nIndex );
+                    if ( !IsWin10 )
+                    {
+                        return new IntPtr( value );
+                    }
                     if ( value < Int32.MaxValue )
                     {
                         return new IntPtr( value );

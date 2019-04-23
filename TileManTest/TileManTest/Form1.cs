@@ -44,7 +44,7 @@ namespace TileManTest
             _TileSetting = TileSetting.Load( SettingPath );
 
             WindowManager = new TileWindowManager( UIHeight );
-
+            WindowManager.OnTagChange += (s,e) => Invalidate( );
             try
             {
                 InitializeComponent( );
@@ -112,7 +112,7 @@ namespace TileManTest
         {
             foreach ( var item in WindowManager.ScreenList )
             {
-                item.PaintIcon( ClientTitleList , e );
+                item.PaintIcon( ClientTitleList , e , WindowManager.SelectedTag );
             }
         }
 
@@ -607,7 +607,6 @@ namespace TileManTest
                     return TileMode.NoHandle;
                 }
             }
-
 
             var parent = ThreadWindowHandles.GetParent( hwnd );
             var owner = User32Helpers.GetWindow( hwnd , GetWindowFlag.GW_OWNER );

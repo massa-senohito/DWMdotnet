@@ -107,8 +107,13 @@ namespace TileManTest
             Logger.Warn( $"all Client {ClientTitles.ToJson( ) }" );
         }
 
+        // 隠しているとアイコンを自動開放するらしい タイル化ごとに再取得
         public void ResetIcon()
         {
+            foreach ( var icon in IconList )
+            {
+                icon.Dispose( );
+            }
             IconList.Clear( );
             foreach ( var c in ClientList )
             {

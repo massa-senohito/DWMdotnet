@@ -26,7 +26,7 @@ namespace TileManTest
         void ForeachTagManager( Action<TagManager> action );
         bool IsContainScreen( IntPtr hwnd );
         bool IsSameScreen( Screen screen );
-        void PaintIcon( List<ListBox> clientTitleList , PaintEventArgs e );
+        void PaintIcon( List<ListBox> clientTitleList , PaintEventArgs e , TagType SelectedTag );
         void SetAllWindowFore();
         void SortMaster( Client NextMaster , TagType SelectedTag );
         TagManager Tag( string id );

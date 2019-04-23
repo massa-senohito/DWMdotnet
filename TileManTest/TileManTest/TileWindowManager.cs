@@ -13,7 +13,7 @@ namespace TileManTest
     class TileWindowManager
     {
         // Variable
-
+        public event EventHandler OnTagChange;
         public Client ActiveClient
         {
             get;
@@ -151,6 +151,7 @@ namespace TileManTest
             SelectedTag = nextTag;
             CurrentTag.ResetIcon( );
             Tile( );
+            OnTagChange( this , new EventArgs( ) );
         }
 
         public void Tile()

@@ -106,6 +106,10 @@ namespace TileManTest
 
         public static void Update()
         {
+            if ( Frame == int.MaxValue )
+            {
+                Frame = 0;
+            }
             Frame++;
         }
     }

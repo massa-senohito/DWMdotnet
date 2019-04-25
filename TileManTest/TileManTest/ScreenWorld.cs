@@ -58,6 +58,9 @@ namespace TileManTest
         // コピーならスキャン後やムーブ後
         OrderedDictionary<TagType , TagManager> TagClientDic = new OrderedDictionary<TagType, TagManager>( );
         DebugLogger Logger;
+        Font NumberFont;
+        SolidBrush NumberBrush = new SolidBrush( Color.YellowGreen);
+        SolidBrush CurrentTagRectBrush = new SolidBrush( Color.FromArgb( 63 , 72 , 204 ) );
 
         public ScreenWorld( Screen screen )
         {
@@ -65,6 +68,9 @@ namespace TileManTest
             _Screen = screen;
             AdjacentScrenOffset = screen.Bounds.Left;
             ScreenGeom = screen.WorkingArea;
+
+            NumberFont = new Font( new FontFamily( "Meiryo" ) , 9 , FontStyle.Regular );
+    
         }
 
         public bool IsContainScreen( IntPtr hwnd )
@@ -91,22 +97,24 @@ namespace TileManTest
 
         public void PaintIcon( List<ListBox> clientTitleList, PaintEventArgs e , TagType SelectedTag)
         {
-            int intTag = int.Parse( SelectedTag );
+            int selectedIntTag = int.Parse( SelectedTag );
             for ( int i = 0 ; i < TagClientDic.Count ; i++ )
             {
                 var tagMan = TagClientDic.ElementAt( i ).Value;
                 var listBox = clientTitleList[ i ];
                 // 現在のタグの上に今のタグを確認するための青い四角を書く
                 // todo コンストラクタでリストボックス受け取りたい
-                if ( i + 1 == intTag )
+                int tagName = i + 1;
+                Rectangle bounds = listBox.Bounds;
+                if ( tagName == selectedIntTag )
                 {
-                    Rectangle bounds = listBox.Bounds;
                     int x = bounds.X;
                     int y = 0;
                     int w = bounds.Width;
                     int h = 12;
-                    e.Graphics.FillRectangle( new SolidBrush( Color.FromArgb( 63 , 72 , 204 ) ) , x , y , w , h );
+                    e.Graphics.FillRectangle( CurrentTagRectBrush , x , y , w , h );
                 }
+                e.Graphics.DrawString( tagName.ToString( ) , NumberFont , NumberBrush , bounds.X + bounds.Width / 4 , bounds.Y -13 );
                 List<Icon> iconList = tagMan.IconList;
                 for ( int j = 0 ; j < iconList.Count ; j++ )
                 {
@@ -205,11 +213,18 @@ namespace TileManTest
 
         }
 
+        IntPtr TopMost = new IntPtr( -1 );
+        IntPtr NoTopMost = new IntPtr( -2 );
+        // todo すべてのクライアントが対象になっている アクティブタグをこのクラス側で管理したい
         public void SetAllWindowFore()
         {
             ForeachClient( c =>
              {
-                 User32Methods.SetForegroundWindow( c.Hwnd );
+                 Logger.Trace( c.Title );
+                 User32Methods.SetWindowPos( c.Hwnd , TopMost , c.X , c.Y , c.W , c.H ,
+                     WindowPositionFlags.SWP_NOMOVE | WindowPositionFlags.SWP_NOSIZE );
+                 User32Methods.SetWindowPos( c.Hwnd , NoTopMost , c.X , c.Y , c.W , c.H ,
+                     WindowPositionFlags.SWP_SHOWWINDOW | WindowPositionFlags.SWP_NOMOVE | WindowPositionFlags.SWP_NOSIZE );
                  return false;
              } );
         }

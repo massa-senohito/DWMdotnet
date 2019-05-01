@@ -2,6 +2,7 @@
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using TileManTest;
 
 class HotKey
 {
@@ -15,6 +16,8 @@ class HotKey
     private static extern int UnregisterHotKey( IntPtr hWnd ,
                                                int id );
 
+    DebugLogger Logger;
+
     public HotKey( IntPtr hWnd , int id , Keys key , Keys mod)
     {
         this.hWnd = hWnd;
@@ -26,7 +29,7 @@ class HotKey
         int modifiers = ( int )keys >> 16;
 
         this.lParam = new IntPtr( modifiers | keycode << 16 );
-
+        Logger = new DebugLogger( key.ToString( ) );
         if ( RegisterHotKey( hWnd , id , modifiers , keycode ) == 0 )
             // ホットキーの登録に失敗
             throw new Win32Exception( Marshal.GetLastWin32Error( ) );
@@ -38,9 +41,11 @@ class HotKey
             return;
 
         if ( UnregisterHotKey( hWnd , id ) == 0 )
-            // ホットキーの解除に失敗
-            throw new Win32Exception( Marshal.GetLastWin32Error( ) );
+        {
 
+            // ホットキーの解除に失敗
+            Logger.Error( Marshal.GetLastWin32Error( ) );
+        }
         hWnd = IntPtr.Zero;
     }
 

@@ -182,11 +182,8 @@ namespace MouseCaptureTest
                 try
                 {
 
-                    long value = GetClassLongPtr32( hWnd , nIndex );
-                    if ( !IsWin10 )
-                    {
-                        return new IntPtr( value );
-                    }
+                    uint value = GetClassLongPtr32( hWnd , nIndex );
+
                     if ( value < Int32.MaxValue )
                     {
                         return new IntPtr( value );
@@ -205,7 +202,7 @@ namespace MouseCaptureTest
         }
 
         [DllImport( "user32.dll" , EntryPoint = "GetClassLong" )]
-        public static extern long GetClassLongPtr32( IntPtr hWnd , int nIndex );
+        public static extern uint GetClassLongPtr32( IntPtr hWnd , int nIndex );
 
         [DllImport( "user32.dll" , EntryPoint = "GetClassLongPtr" )]
         public static extern IntPtr GetClassLongPtr64( HandleRef hWnd , int nIndex );

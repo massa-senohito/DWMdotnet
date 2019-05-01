@@ -132,7 +132,7 @@ namespace TileManTest
             }
         }
 
-        private void CleanUp()
+        public void CleanUp()
         {
             foreach ( var screen in WindowManager.ScreenList )
             {
@@ -429,8 +429,8 @@ namespace TileManTest
                 {
 
                     fromWorldTagManager.RemoveClient( movedClient );
-                    TagManager toWorldTagManager = toWorld.Tag( WindowManager.SelectedTag );
-                    toWorldTagManager.AddClient( movedClient );
+                    TagManager toWorldTagManager = toWorld?.Tag( WindowManager.SelectedTag );
+                    toWorldTagManager?.AddClient( movedClient );
                 }
 ;
             }

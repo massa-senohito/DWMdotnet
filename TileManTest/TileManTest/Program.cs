@@ -14,9 +14,19 @@ namespace TileManTest
         [STAThread]
         static void Main()
         {
-            Application.EnableVisualStyles( );
-            Application.SetCompatibleTextRenderingDefault( false );
-            Application.Run( new Form1( ) );
+            Form1 mainForm = null;
+            try
+            {
+                Application.EnableVisualStyles( );
+                Application.SetCompatibleTextRenderingDefault( false );
+                mainForm = new Form1( );
+                Application.Run( mainForm );
+            }
+            catch ( Exception exn )
+            {
+                DebugLogger.GlobalLogger.Error( exn );
+                mainForm.CleanUp( );
+            }
         }
     }
 }

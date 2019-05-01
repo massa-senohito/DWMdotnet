@@ -101,10 +101,16 @@ namespace TileManTest
         List<string> IgnoreTargetList = new List<string>( )
         {
             "Everything",
+            "OperationStatusWindow",
         };
 
         public bool IsBlackTarget( IntPtr hwnd )
         {
+            var title = ThreadWindowHandles.GetWindowText( hwnd );
+            if ( title == string.Empty )
+            {
+                return true;
+            }
             return HasTarget( IgnoreTargetList , hwnd );
         }
 

@@ -214,7 +214,6 @@
     <Compile Include="Form1.Designer.cs">
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
-    <Compile Include="Handles.cs" />
     <Compile Include="Hotkey.cs" />
     <Compile Include="IScreenWorld.cs" />
     <Compile Include="MultiDictionary.cs" />
@@ -258,6 +257,10 @@
     <ProjectReference Include="..\..\Dwmdotnet\Dwmdotnet\Dwmdotnet.fsproj">
       <Project>{020a7f38-0f76-408c-9c34-33c363764ad6}</Project>
       <Name>Dwmdotnet</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Dwmdotnet\WinApi\MasWinApi.csproj">
+      <Project>{f29151b9-32ac-4f79-9421-9711a4d2b1bf}</Project>
+      <Name>MasWinApi</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

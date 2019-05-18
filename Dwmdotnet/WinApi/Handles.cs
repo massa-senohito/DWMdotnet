@@ -279,7 +279,7 @@ public static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int 
         //            int nCmdShow   // 表示状態
         //            );
         [Flags]
-        enum SW
+        public enum SW
         {
 
             SW_HIDE = 0,
@@ -299,9 +299,9 @@ public static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int 
             SW_MAX = 11,
         }
         [DllImport( "User32.Dll" )]
-        static extern int ShowWindow(
+        public static extern int ShowWindow(
             IntPtr hWnd ,
-            int nCmdShow
+            SW nCmdShow
             );
 
         uint threadId;
@@ -334,7 +334,7 @@ public static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int 
             return GetWindowThreadProcessId( hWnd , out ret );
         }
 
-        public static StringBuilder GetWindowText( IntPtr hWnd )
+        public static String GetWindowText( IntPtr hWnd )
         {
             //ウィンドウのタイトルの長さを取得する
             int textLen = GetWindowTextLength( hWnd );
@@ -344,9 +344,9 @@ public static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int 
                 StringBuilder tsb = new StringBuilder( textLen + 1 );
                 GetWindowText( hWnd , tsb , tsb.Capacity );
 
-                return tsb;
+                return tsb.ToString();
             }
-            return null;
+            return "";
         }
         public static String GetClassText( IntPtr hWnd )
         {
@@ -438,12 +438,44 @@ public static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int 
             {
                 return Right - Left;
             }
+            set
+            {
+                Right = Left + value;
+            }
         }
         public int Height
         {
             get
             {
                 return Bottom - Top;
+            }
+            set
+            {
+                Bottom = Top + value;
+            }
+        }
+
+        public RECT( int left , int top , int width , int height )
+        {
+            Left = left;
+            Top  = top;
+            Right = left + width;
+            Bottom = top + height;
+        }
+
+        public RECT( RECT rect )
+        {
+            Left = rect.Left;
+            Top  = rect.Top;
+            Right = rect.Right;
+            Bottom = rect.Bottom;
+        }
+
+        public Rectangle Rect
+        {
+            get
+            {
+                return new Rectangle( Left , Top , Width , Height );
             }
         }
     }

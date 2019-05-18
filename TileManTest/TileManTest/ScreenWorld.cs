@@ -121,9 +121,9 @@ namespace TileManTest
                     var icon = iconList[ j ];
                     var size = 12;
                     var rect = new Rectangle( listBox.Left - 16 , listBox.Top + j * size + 2 , size , size );
-                    if ( icon != null )
+                    if ( icon != null && icon.Width > 0)
                     {
-                        // なんかnullでくることがあった
+                        // なんかnullや破棄されていることがあった
                         e.Graphics.DrawIcon( icon , rect );
                     }
                     else
@@ -275,13 +275,13 @@ namespace TileManTest
                 return;
             }
             var winGeom = ScreenGeom;
+            var slaveList = tiledClient.Skip( 1 ).ToList( );
+            int slaveCount = slaveList.Count;
+
             var x = master.Rect.X + master.Rect.Width; 
             int y = winGeom.Top + UIHeight;
             var w = winGeom.Width - masterWidth;
-            var h = (ScreenGeom.Height - UIHeight) / tiledClient.Count;
-
-            var slaveList = tiledClient.Skip( 1 ).ToList( );
-            int slaveCount = slaveList.Count;
+            var h = (ScreenGeom.Height - UIHeight) / slaveCount;
 
             for ( int i = 0 ; i < slaveCount ; i++ )
             {

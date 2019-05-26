@@ -160,20 +160,6 @@ namespace Handles
             return result;
         }
 
-        [DllImport( "User32.Dll" )]
-        public static extern int IsWindowVisible(
-              IntPtr hWnd
-              );
-
-        [DllImport( "user32.dll" )]
-        static extern IntPtr GetWindowDC( IntPtr hwnd );
-
-        [DllImport( "user32.dll" )]
-        static extern short GetKeyState( int nVirtKey );
-
-        [DllImport( "user32.dll" )]
-        extern static int UnregisterHotKey( IntPtr hWnd , int id );
-
         [DllImport( "user32.dll" , SetLastError = true , CharSet = CharSet.Auto )]
         public static extern uint RegisterWindowMessage( string lpString );
         [DllImport( "user32.dll" , SetLastError = true )]
@@ -183,27 +169,9 @@ namespace Handles
         static extern bool SetSysColors( int cElements , int[] lpaElements ,
            uint[] lpaRgbValues );
 
-        [DllImport( "user32.dll" )]
-        static extern IntPtr ReleaseDC( IntPtr hwnd , IntPtr hdc );
-
-        [DllImportAttribute( "gdi32.dll" , EntryPoint = "CreateSolidBrush" )]
-        public static extern IntPtr CreateSolidBrush( BrushStyles enBrushStyle , int crColor );
-
-        [DllImport( "gdi32.dll" , EntryPoint = "SelectObject" )]
-        public static extern IntPtr SelectObject( IntPtr hdc , IntPtr bmp );
-
-        [DllImport( "user32.dll" )]
-        static extern int FillRect( IntPtr hDC , [In] ref RECT lprc , IntPtr hbr );
-
-        [DllImport( "gdi32.dll" , EntryPoint = "DeleteObject" )]
-        [return: MarshalAs( UnmanagedType.Bool )]
-        public static extern bool DeleteObject( [In] IntPtr hObject );
-
+        // WinApiにはなかった
         [DllImport( "gdi32.dll" )]
         public static extern IntPtr CreatePen( PenStyle fnPenStyle , int nWidth , uint crColor );
-
-        [DllImport( "user32.dll" , CharSet = CharSet.Auto )]
-        public static extern int DrawText( IntPtr hDC , string lpString , int nCount , [In, Out] ref RECT lpRect , DT uFormat );
 
 #if true
 

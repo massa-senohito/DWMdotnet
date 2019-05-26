@@ -4,5 +4,4 @@ let getClientTitle hWnd =
 let getClientClassname hWnd =
   (Handles.ThreadWindowHandles.GetClassText hWnd).ToString()
 
-let customWnd name proc =
-  new CustomWindow(name , proc)
+

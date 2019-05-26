@@ -79,7 +79,7 @@ namespace TileManTest
                     ClientTitleList[ i - 1 ].Click += Form1_SelectedIndexChanged;
                 }
                 HotkeyList.Add( new HotKey( Handle , ToggleHotID , Keys.H , Keys.Control ) );
-                HotkeyList.Add( new HotKey( Handle , SortMaster  , Keys.M , Keys.Control ) );
+                HotkeyList.Add( new HotKey( Handle , SortMaster  , Keys.M , Keys.Control | Keys.Alt ) );
 
                 SetUp( );
                 WindowManager.ActiveClient = WindowManager.TryGetMaster( );
@@ -552,6 +552,7 @@ namespace TileManTest
             TileMode tileMode = IsManageable( hwnd );
             if ( tileMode != TileMode.NoHandle )
             {
+
                 Manage( hwnd , tileMode);
                 // chrome、最小化してるウィンドウがマスターだとサイズが0のように処理される
                 ThreadWindowHandles.ShowWindow( hwnd , ThreadWindowHandles.SW.SW_RESTORE );
@@ -587,12 +588,15 @@ namespace TileManTest
             {
                 return TileMode.NoHandle;
             }
+            // すべてのプロセスが表示されるので RECOVERしたいならこれの表示を参考に
             Trace.WriteLine( windowText + " : className = " + classText );
 #if RECOVER
             if ( 
                 windowText.Contains( "Chrome" ) ||
                 windowText.Contains( "Avast Secure" ) ||
-                windowText.Contains( "Visual" ) ||
+                windowText.Contains( "Microsoft Visual Studio" ) ||
+                classText.Contains( "UnityContainerWndClass" ) ||
+                classText == ( "Vim" ) ||
                 classText.Contains( "CabinetWClass" )
                 )
             {

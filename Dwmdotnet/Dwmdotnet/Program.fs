@@ -165,23 +165,3 @@ namespace DWMDotnet
           c.Rect <- new Rectangle(copyX , copyY , copyW , copyH )
           ThreadWindowHandles.SetWindowPos( c.Hwnd , nativeint(0) ,
             copyX , copyY , copyW , copyH , SWP.NOACTIVATE ) |> ignore
-
-
-        
-    
-    //[<EntryPoint>]
-    let main argv = 
-        printfn "%A" argv
-        let hs = new TopLevelWindowHandles()
-        let hList = [for i in hs.handles -> i]
-        for i in hList do
-          let builder = ThreadWindowHandles.GetWindowText(i)
-          if(builder <> null) then
-            let name = builder.ToString()
-            Debug.WriteLine(name)
-            let flag = SWP.SHOWWINDOW ||| SWP.DRAWFRAME
-            if name.IndexOf("diskinfo3",StringComparison.CurrentCultureIgnoreCase) <> 0 then
-              ThreadWindowHandles.SetWindowPos(i,new nativeint(-1),600,90,500,500, flag) |> ignore
-              ()
-    
-        0 // 整数の終了コードを返します

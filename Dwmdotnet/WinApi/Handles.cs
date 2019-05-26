@@ -399,32 +399,6 @@ public static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int 
         }
     }
 
-    /// <summary>
-    /// トップレベルウィンドウのウィンドウハンドルを列挙する機能を提供します。
-    /// </summary>
-    [SecurityPermission( SecurityAction.Demand , UnmanagedCode = true )]
-    public sealed class TopLevelWindowHandles : WindowHandles
-    {
-        [SuppressUnmanagedCodeSecurity]
-        public static class NativeMethods
-        {
-            [DllImport( "user32.dll" , CallingConvention = CallingConvention.StdCall , SetLastError = true )]
-            [return: MarshalAs( UnmanagedType.Bool )]
-            public static extern bool EnumWindows(
-                [MarshalAs( UnmanagedType.FunctionPtr )] EnumWindowsProcDelegate enumProc ,
-                IntPtr lParam );
-        }
-
-        /// <summary>
-        /// トップレベルウィンドウのウィンドウハンドルを列挙します。
-        /// </summary>
-        public TopLevelWindowHandles()
-            : base( )
-        {
-            handles = new List<IntPtr>( );
-            NativeMethods.EnumWindows( EnumWindowProc , default( IntPtr ) );
-        }
-    }
     [StructLayout( LayoutKind.Sequential , Pack = 4 )]
     public struct RECT
     {

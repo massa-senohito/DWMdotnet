@@ -59,7 +59,7 @@ namespace TileManTest
         OrderedDictionary<TagType , TagManager> TagClientDic = new OrderedDictionary<TagType, TagManager>( );
         DebugLogger Logger;
         Font NumberFont;
-        SolidBrush NumberBrush = new SolidBrush( Color.YellowGreen);
+        SolidBrush NumberBrush = new SolidBrush( Color.FromArgb( 0 , 172 , 204 ));
         SolidBrush CurrentTagRectBrush = new SolidBrush( Color.FromArgb( 63 , 72 , 204 ) );
 
         public ScreenWorld( Screen screen )

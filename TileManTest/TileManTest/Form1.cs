@@ -282,7 +282,7 @@ namespace TileManTest
         {
             var hwnd = ThreadWindowHandles.FindWindow( "Shell_TrayWnd" , null );
             RECT rect = new RECT();
-            if ( ThreadWindowHandles.IsWindowVisible( hwnd ) > 0 )
+            if ( User32Methods.IsWindowVisible( hwnd ) )
             {
                 ThreadWindowHandles.SystemParametersInfoGet( ( uint )SystemParametersDesktopInfo.SPI_GETWORKAREA , 0 ,
                     ref rect , ( uint )SystemParamtersInfoFlags.None );
@@ -516,12 +516,12 @@ namespace TileManTest
             {
 
                 WindowPlacement windowPlacement = new WindowPlacement( );
-                if ( ThreadWindowHandles.IsWindowVisible( client.Hwnd ) > 0 )
+                if ( User32Methods.IsWindowVisible( client.Hwnd ) )
                 {
                     User32Methods.SetWindowPlacement( hwnd , ref windowPlacement );
                 }
 
-                if ( ThreadWindowHandles.IsWindowVisible( hwnd ) > 0 )
+                if ( User32Methods.IsWindowVisible( hwnd ) )
                 {
                     Rectangle windowRect = windowInfo.WindowRect;
                     DWM.resize( client , windowRect.Left , windowRect.Top , windowRect.Width , windowRect.Height , ScreenGeom.Rect );

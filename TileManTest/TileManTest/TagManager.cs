@@ -140,9 +140,18 @@ namespace TileManTest
                 // アイコンが生成されないとインデックスが不一致になる
                 Logger.Info( $"removed {client.Title}" );
                 ClientList.RemoveAt( mayInd );
-                var icon = IconList[ mayInd ];
-                RemoveIcon( mayInd );
-                icon?.Dispose( );
+
+                if ( mayInd < IconList.Count )
+                {
+                    var icon = IconList[ mayInd ];
+                    RemoveIcon( mayInd );
+                    icon?.Dispose( );
+                }
+                else
+                {
+                    Logger.Warn( $" can't find {mayInd} in Icon " );
+
+                }
                 Logger.Warn( $"all Client {ClientTitles.ToJson( ) }" );
                 return true;
             }

@@ -26,7 +26,7 @@
         /// デザイナー サポートに必要なメソッドです。このメソッドの内容を
         /// コード エディターで変更しないでください。
         /// </summary>
-        private void InitializeComponent()
+        private void InitializeComponent( )
         {
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
@@ -41,12 +41,13 @@
             this.listBox8 = new System.Windows.Forms.ListBox();
             this.listBox9 = new System.Windows.Forms.ListBox();
             this.QuitButton = new System.Windows.Forms.Button();
+            this.label4 = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(1400, 74);
+            this.label1.Location = new System.Drawing.Point(1400, 64);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(35, 12);
             this.label1.TabIndex = 0;
@@ -55,7 +56,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(1400, 53);
+            this.label2.Location = new System.Drawing.Point(1400, 48);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(35, 12);
             this.label2.TabIndex = 1;
@@ -64,11 +65,12 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(1476, 12);
+            this.label3.Location = new System.Drawing.Point(1456, 12);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(35, 12);
+            this.label3.Size = new System.Drawing.Size(223, 72);
             this.label3.TabIndex = 2;
-            this.label3.Text = "label3";
+            this.label3.Text = "Ctrl + [1..9]\r\n  Switch tag.\r\nCtrl + Shift + [1..9]\r\n  Send active client to arbi" +
+    "trary tag.\r\nCtrl + Shift +M\r\n  Change active window into master client.";
             // 
             // listBox1
             // 
@@ -76,7 +78,7 @@
             this.listBox1.ItemHeight = 12;
             this.listBox1.Location = new System.Drawing.Point(42, 12);
             this.listBox1.Name = "listBox1";
-            this.listBox1.Size = new System.Drawing.Size(120, 100);
+            this.listBox1.Size = new System.Drawing.Size(120, 64);
             this.listBox1.TabIndex = 7;
             // 
             // listBox2
@@ -85,7 +87,7 @@
             this.listBox2.ItemHeight = 12;
             this.listBox2.Location = new System.Drawing.Point(187, 12);
             this.listBox2.Name = "listBox2";
-            this.listBox2.Size = new System.Drawing.Size(120, 100);
+            this.listBox2.Size = new System.Drawing.Size(120, 64);
             this.listBox2.TabIndex = 8;
             // 
             // listBox3
@@ -94,7 +96,7 @@
             this.listBox3.ItemHeight = 12;
             this.listBox3.Location = new System.Drawing.Point(332, 12);
             this.listBox3.Name = "listBox3";
-            this.listBox3.Size = new System.Drawing.Size(120, 100);
+            this.listBox3.Size = new System.Drawing.Size(120, 64);
             this.listBox3.TabIndex = 10;
             // 
             // listBox4
@@ -103,7 +105,7 @@
             this.listBox4.ItemHeight = 12;
             this.listBox4.Location = new System.Drawing.Point(475, 12);
             this.listBox4.Name = "listBox4";
-            this.listBox4.Size = new System.Drawing.Size(120, 100);
+            this.listBox4.Size = new System.Drawing.Size(120, 64);
             this.listBox4.TabIndex = 9;
             // 
             // listBox5
@@ -112,7 +114,7 @@
             this.listBox5.ItemHeight = 12;
             this.listBox5.Location = new System.Drawing.Point(625, 12);
             this.listBox5.Name = "listBox5";
-            this.listBox5.Size = new System.Drawing.Size(120, 100);
+            this.listBox5.Size = new System.Drawing.Size(120, 64);
             this.listBox5.TabIndex = 11;
             // 
             // listBox6
@@ -121,7 +123,7 @@
             this.listBox6.ItemHeight = 12;
             this.listBox6.Location = new System.Drawing.Point(772, 12);
             this.listBox6.Name = "listBox6";
-            this.listBox6.Size = new System.Drawing.Size(120, 100);
+            this.listBox6.Size = new System.Drawing.Size(120, 64);
             this.listBox6.TabIndex = 15;
             // 
             // listBox7
@@ -130,7 +132,7 @@
             this.listBox7.ItemHeight = 12;
             this.listBox7.Location = new System.Drawing.Point(923, 12);
             this.listBox7.Name = "listBox7";
-            this.listBox7.Size = new System.Drawing.Size(120, 100);
+            this.listBox7.Size = new System.Drawing.Size(120, 64);
             this.listBox7.TabIndex = 14;
             // 
             // listBox8
@@ -139,7 +141,7 @@
             this.listBox8.ItemHeight = 12;
             this.listBox8.Location = new System.Drawing.Point(1076, 12);
             this.listBox8.Name = "listBox8";
-            this.listBox8.Size = new System.Drawing.Size(120, 100);
+            this.listBox8.Size = new System.Drawing.Size(120, 64);
             this.listBox8.TabIndex = 13;
             // 
             // listBox9
@@ -148,7 +150,7 @@
             this.listBox9.ItemHeight = 12;
             this.listBox9.Location = new System.Drawing.Point(1228, 12);
             this.listBox9.Name = "listBox9";
-            this.listBox9.Size = new System.Drawing.Size(120, 100);
+            this.listBox9.Size = new System.Drawing.Size(120, 64);
             this.listBox9.TabIndex = 12;
             // 
             // QuitButton
@@ -161,12 +163,23 @@
             this.QuitButton.UseVisualStyleBackColor = true;
             this.QuitButton.Click += new System.EventHandler(this.QuitButton_Click);
             // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(1700, 12);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(206, 48);
+            this.label4.TabIndex = 17;
+            this.label4.Text = "Ctrl + H\r\n  Toggle window manager show/hidden.\r\nCtrl + Shift + Q\r\n  Quit window m" +
+    "anager.";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1528, 118);
+            this.ClientSize = new System.Drawing.Size(2040, 87);
             this.ControlBox = false;
+            this.Controls.Add(this.label4);
             this.Controls.Add(this.QuitButton);
             this.Controls.Add(this.listBox6);
             this.Controls.Add(this.listBox7);
@@ -204,6 +217,6 @@
         private System.Windows.Forms.ListBox listBox8;
         private System.Windows.Forms.ListBox listBox9;
         private System.Windows.Forms.Button QuitButton;
+        private System.Windows.Forms.Label label4;
     }
 }
-

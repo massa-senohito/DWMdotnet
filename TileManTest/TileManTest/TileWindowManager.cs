@@ -145,6 +145,7 @@ namespace TileManTest
             SelectedTag = nextTag;
             CurrentTag.ResetIcon( );
             Tile( );
+            CurrentTag.RemoveEmptyTag( );
 
             // なんかきいてない気がする
             //foreach ( var screen in ScreenList )

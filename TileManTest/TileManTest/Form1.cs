@@ -358,8 +358,18 @@ namespace TileManTest
         {
             DebugLogger.Update( );
             var wnd = Win32dll.WindowFromPoint( MousePosition.X , MousePosition.Y );
+            if(MousePosition.Y > UIHeight)
+            {
+                Opacity = 0.5f;
+            }
+            else
+            {
+                Opacity = 1.0f;
+            }
+
             uint procID = 0;
             label2.Text = wnd.ToString( );
+            label1.Text = DateTime.Now.ToString( "HH:mm" );
             //label1.Text = SelectedClientList( ).Aggregate( "" , ( acc , c ) => acc + "\n" + c.Title );
 #if USEWINAPI
             //IntPtr procPtr = IntPtr.Zero;

@@ -244,6 +244,13 @@ namespace TileManTest
                 return TagClientDic.Values;
             }
         }
+        public int TagCount
+        {
+            get
+            {
+                return TagClientDic.Count;
+            }
+        }
 
         public void Attach( Client client , string dest )
         {

@@ -42,6 +42,7 @@ namespace TileManTest
 
         public Form1( )
         {
+            KeyDown += ( s , e ) => MessageBox.Show( e.KeyData.ToString() );
             Logger = new DebugLogger( "Form1" );
             _TileSetting = TileSetting.Load( SettingPath );
 
@@ -62,24 +63,23 @@ namespace TileManTest
                     listBox7,
                     listBox8,
                     listBox9,
+                    listBox10,
+                    listBox11,
+                    listBox12,
                 };
 
-                for ( int i = 1 ; i < 10 ; i++ )
+                for ( int i = 1 ; i < 10; i++ )
                 {
                     Keys d0 = ( Keys )( ( int )Keys.D0 + i );
-                    const Keys changeTag = Keys.Control ;
-                    const Keys sendTag   = Keys.Control | Keys.Alt;
-                    var hotkeyNotify = new HotKey( this.Handle, i      , d0 , changeTag);
-                    var hotkeySend   = new HotKey( this.Handle, i + 10 , d0 , sendTag);
-                    HotkeyList.Add( hotkeyNotify );
-                    HotkeyList.Add( hotkeySend );
+                    AddIndexHotKey( i , d0 );
 
-                    foreach ( var screen in WindowManager.ScreenList )
-                    {
-                        screen.AddTag( i );
-                    }
-                    ClientTitleList[ i - 1 ].Click += Form1_SelectedIndexChanged;
+
                 }
+                AddIndexHotKey( 10 , Keys.D0 );
+                AddIndexHotKey( 11 , Keys.OemMinus );
+                // HHKBの^キー
+                AddIndexHotKey( 12 , Keys.OemQuotes);
+
                 HotkeyList.Add( new HotKey( Handle , ToggleHotID , Keys.H , Keys.Control ) );
                 HotkeyList.Add( new HotKey( Handle , SortMaster , Keys.M , Keys.Control | Keys.Alt ) );
                 HotkeyList.Add( new HotKey( Handle , QuitHotID , Keys.Q , Keys.Control | Keys.Alt ) );
@@ -111,6 +111,22 @@ namespace TileManTest
             }
         }
 
+        private void AddIndexHotKey( int i , Keys d0 )
+        {
+            const Keys changeTag = Keys.Control ;
+            const Keys sendTag   = Keys.Control | Keys.Alt;
+            var hotkeyNotify = new HotKey( this.Handle, i      , d0 , changeTag);
+            var hotkeySend   = new HotKey( this.Handle, i + ClientTitleList.Count , d0 , sendTag);
+            HotkeyList.Add( hotkeyNotify );
+            HotkeyList.Add( hotkeySend );
+
+            foreach ( var screen in WindowManager.ScreenList )
+            {
+                screen.AddTag( i );
+            }
+            ClientTitleList[ i - 1 ].Click += Form1_SelectedIndexChanged;
+        }
+
         private void Form1_Paint( object sender , PaintEventArgs e )
         {
             foreach ( var item in WindowManager.ScreenList )
@@ -122,7 +138,7 @@ namespace TileManTest
         private void Form1_SelectedIndexChanged( object sender , EventArgs e )
         {
             var listBox = sender as ListBox;
-            var newTag  = listBox.Name.Last( ).ToString();
+            var newTag  = listBox.Name.Substring(7).ToString();
             //ChangeTag( TagClientDic[ SelectedTag.ToString( ) ] , newTag );
             WindowManager.ChangeTag( WindowManager.CurrentTag , newTag );
             WindowManager.SelectedTag = newTag;
@@ -132,7 +148,7 @@ namespace TileManTest
             {
                 var clientList = WindowManager.SelectedClientList( );
                 // selectした瞬間そのウィンドウが死んだ時配列外参照
-                if ( clientList.Count <= selectedInd )
+                if ( selectedInd <= clientList.Count  )
                 {
                     User32Methods.SetForegroundWindow( clientList[ selectedInd ].Hwnd );
                 }
@@ -360,7 +376,7 @@ namespace TileManTest
             var wnd = Win32dll.WindowFromPoint( MousePosition.X , MousePosition.Y );
             if(MousePosition.Y > UIHeight)
             {
-                Opacity = 0.5f;
+                Opacity = 0.7f;
             }
             else
             {
@@ -635,7 +651,9 @@ namespace TileManTest
                 windowText.Contains( "Avast Secure" ) ||
                 windowText.Contains( "Visual" ) ||
                 windowText.Contains( "VIM" ) ||
-                classText.Contains( "CabinetWClass" )
+                classText.Contains( "CabinetWClass" ) ||
+                windowText.Contains("pmx") ||
+                windowText.Contains("Blender")
                 )
             {
                 DWM.setVisibility( hwnd , true );

@@ -17,7 +17,6 @@ namespace TileManTest
         string Name;
 
         static int Frame;
-        Form LoggerForm; 
 
         string Ondate( LogEventInfo info )
         {

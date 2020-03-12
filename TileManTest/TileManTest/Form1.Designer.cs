@@ -30,7 +30,6 @@
         {
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
-            this.label3 = new System.Windows.Forms.Label();
             this.listBox1 = new System.Windows.Forms.ListBox();
             this.listBox2 = new System.Windows.Forms.ListBox();
             this.listBox3 = new System.Windows.Forms.ListBox();
@@ -41,13 +40,15 @@
             this.listBox8 = new System.Windows.Forms.ListBox();
             this.listBox9 = new System.Windows.Forms.ListBox();
             this.QuitButton = new System.Windows.Forms.Button();
-            this.label4 = new System.Windows.Forms.Label();
+            this.listBox10 = new System.Windows.Forms.ListBox();
+            this.listBox11 = new System.Windows.Forms.ListBox();
+            this.listBox12 = new System.Windows.Forms.ListBox();
             this.SuspendLayout();
             // 
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(1400, 64);
+            this.label1.Location = new System.Drawing.Point(1810, 63);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(35, 12);
             this.label1.TabIndex = 0;
@@ -56,21 +57,11 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(1400, 48);
+            this.label2.Location = new System.Drawing.Point(1810, 47);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(35, 12);
             this.label2.TabIndex = 1;
             this.label2.Text = "label2";
-            // 
-            // label3
-            // 
-            this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(1456, 12);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(223, 72);
-            this.label3.TabIndex = 2;
-            this.label3.Text = "Ctrl + [1..9]\r\n  Switch tag.\r\nCtrl + Shift + [1..9]\r\n  Send active client to arbi" +
-    "trary tag.\r\nCtrl + Shift +M\r\n  Change active window into master client.";
             // 
             // listBox1
             // 
@@ -155,7 +146,7 @@
             // 
             // QuitButton
             // 
-            this.QuitButton.Location = new System.Drawing.Point(1402, 12);
+            this.QuitButton.Location = new System.Drawing.Point(1812, 11);
             this.QuitButton.Name = "QuitButton";
             this.QuitButton.Size = new System.Drawing.Size(48, 24);
             this.QuitButton.TabIndex = 16;
@@ -163,15 +154,32 @@
             this.QuitButton.UseVisualStyleBackColor = true;
             this.QuitButton.Click += new System.EventHandler(this.QuitButton_Click);
             // 
-            // label4
+            // listBox10
             // 
-            this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(1700, 12);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(206, 48);
-            this.label4.TabIndex = 17;
-            this.label4.Text = "Ctrl + H\r\n  Toggle window manager show/hidden.\r\nCtrl + Shift + Q\r\n  Quit window m" +
-    "anager.";
+            this.listBox10.FormattingEnabled = true;
+            this.listBox10.ItemHeight = 12;
+            this.listBox10.Location = new System.Drawing.Point(1382, 12);
+            this.listBox10.Name = "listBox10";
+            this.listBox10.Size = new System.Drawing.Size(120, 64);
+            this.listBox10.TabIndex = 17;
+            // 
+            // listBox11
+            // 
+            this.listBox11.FormattingEnabled = true;
+            this.listBox11.ItemHeight = 12;
+            this.listBox11.Location = new System.Drawing.Point(1535, 12);
+            this.listBox11.Name = "listBox11";
+            this.listBox11.Size = new System.Drawing.Size(120, 64);
+            this.listBox11.TabIndex = 18;
+            // 
+            // listBox12
+            // 
+            this.listBox12.FormattingEnabled = true;
+            this.listBox12.ItemHeight = 12;
+            this.listBox12.Location = new System.Drawing.Point(1686, 11);
+            this.listBox12.Name = "listBox12";
+            this.listBox12.Size = new System.Drawing.Size(120, 64);
+            this.listBox12.TabIndex = 19;
             // 
             // Form1
             // 
@@ -179,7 +187,9 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(2040, 87);
             this.ControlBox = false;
-            this.Controls.Add(this.label4);
+            this.Controls.Add(this.listBox12);
+            this.Controls.Add(this.listBox11);
+            this.Controls.Add(this.listBox10);
             this.Controls.Add(this.QuitButton);
             this.Controls.Add(this.listBox6);
             this.Controls.Add(this.listBox7);
@@ -190,7 +200,6 @@
             this.Controls.Add(this.listBox4);
             this.Controls.Add(this.listBox2);
             this.Controls.Add(this.listBox1);
-            this.Controls.Add(this.label3);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
@@ -206,7 +215,6 @@
 
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label label2;
-        private System.Windows.Forms.Label label3;
         private System.Windows.Forms.ListBox listBox1;
         private System.Windows.Forms.ListBox listBox2;
         private System.Windows.Forms.ListBox listBox3;
@@ -217,6 +225,8 @@
         private System.Windows.Forms.ListBox listBox8;
         private System.Windows.Forms.ListBox listBox9;
         private System.Windows.Forms.Button QuitButton;
-        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.ListBox listBox10;
+        private System.Windows.Forms.ListBox listBox11;
+        private System.Windows.Forms.ListBox listBox12;
     }
 }

@@ -31,8 +31,14 @@ class HotKey
         this.lParam = new IntPtr( modifiers | keycode << 16 );
         Logger = new DebugLogger( key.ToString( ) );
         if ( RegisterHotKey( hWnd , id , modifiers , keycode ) == 0 )
-            // ホットキーの登録に失敗
-            throw new Win32Exception( Marshal.GetLastWin32Error( ) );
+        {
+            UnregisterHotKey( hWnd , id );
+            if ( RegisterHotKey( hWnd , id , modifiers , keycode ) == 0 )
+            {
+                // リトライしてだめならホットキーの登録に失敗
+                throw new Win32Exception( Marshal.GetLastWin32Error( ) );
+            }
+        }
     }
 
     public void Unregister()

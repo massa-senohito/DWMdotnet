@@ -83,27 +83,27 @@ public static class ObjectExtensions
         {
             return "";
         }
-        if (arg1 == null) return "";
-        if (isPrimitive(arg1) )
-        {
-            Console.WriteLine("arg1 is prim :" + arg1);
-            return "";
-        }
-        else if(arg1.GetType().IsArray )
-        {
-            var arr = arg1 as IEnumerable;
-            foreach (var item in arr)
-            {
-                Console.WriteLine("arg1 is arr :" + item);
+        //if (arg1 == null) return "";
+        //if (isPrimitive(arg1) )
+        //{
+        //    Console.WriteLine("arg1 is prim :" + arg1);
+        //    return "";
+        //}
+        //else if(arg1.GetType().IsArray )
+        //{
+        //    var arr = arg1 as IEnumerable;
+        //    foreach (var item in arr)
+        //    {
+        //        Console.WriteLine("arg1 is arr :" + item);
 
-            }
-        }
-        else
-        {
-            Console.WriteLine("temp is not prim :"+ temp);
-            temp += arg1.ToStringReflection();
-        }
-        return temp;
+        //    }
+        //}
+        //else
+        //{
+        //    Console.WriteLine("temp is not prim :"+ temp);
+        //    temp += arg1.ToStringReflection();
+        //}
+        //return temp;
     }
 
     /// <summary>

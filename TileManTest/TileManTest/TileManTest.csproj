@@ -36,6 +36,9 @@
     <WarningLevel>4</WarningLevel>
     <LangVersion>7.1</LangVersion>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>dwmdotnet.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Autofac, Version=4.0.1.0, Culture=neutral, PublicKeyToken=17863af14b0044da, processorArchitecture=MSIL">
       <HintPath>..\..\Dwmdotnet\packages\Autofac.4.0.1\lib\net45\Autofac.dll</HintPath>
@@ -215,6 +218,12 @@
     <Compile Include="Form1.Designer.cs">
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
+    <Compile Include="HelpForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="HelpForm.Designer.cs">
+      <DependentUpon>HelpForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Hotkey.cs" />
     <Compile Include="IScreenWorld.cs" />
     <Compile Include="MultiDictionary.cs" />
@@ -229,6 +238,9 @@
     <Compile Include="Win32dll.cs" />
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="HelpForm.resx">
+      <DependentUpon>HelpForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -266,6 +278,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="dwmdotnet.ico" />
     <Content Include="QuickFs.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>QuickFs.txt</LastGenOutput>

@@ -158,15 +158,21 @@ namespace TileManTest
             return false;
         }
 
-        public void RemoveEmptyTag()
+        public void RemoveEmptyTag( )
         {
+            Client temp = null;
             foreach ( var item in ClientList )
             {
-                if(item.Title == "")
+                if ( item.Title == "" )
                 {
-                    RemoveClient( item );
+                    temp = item;
                 }
             }
+            if ( temp != null )
+            {
+                RemoveClient( temp );
+            }
+
         }
 
         public void SortMaster( Client nextMaster )

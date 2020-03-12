@@ -97,9 +97,9 @@ namespace TileManTest
 
         public void TagSignal( HotKey item )
         {
-            bool send = 9 < item.ID;
+            bool send = ScreenList[0].TagCount < item.ID;
             string itemID = item.ID.ToString( );
-            int sentDest = item.ID - 10;
+            int sentDest = item.ID - ScreenList[0].TagCount;
             // 同じタグなら変更入らないように
             if ( sentDest.ToString() == SelectedTag )
             {

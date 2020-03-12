@@ -102,6 +102,10 @@ namespace TileManTest
         {
             "Everything",
             "OperationStatusWindow",
+            "Visual Studio",
+            "Oculus",
+            "Unity Hub",
+            "7z"
         };
 
         public bool IsBlackTarget( IntPtr hwnd )
@@ -134,6 +138,13 @@ namespace TileManTest
         public TileSetting()
         {
 
+            var path = "ignore.txt";
+
+            if(File.Exists(path))
+            {
+                var lines = File.ReadAllLines( path );
+                IgnoreTargetList.AddRange( lines );
+            }
             //NoTilingList = new List<string>( )
             //{
             //    "Visual",

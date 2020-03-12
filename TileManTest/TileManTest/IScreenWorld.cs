@@ -15,6 +15,11 @@ namespace TileManTest
             get;
         }
 
+        int TagCount
+        {
+            get;
+        }
+
         void AddTag( int id );
         void Attach( Client client , string dest );
         IEnumerable<Client> MovedClients( TagType SelectedTag );

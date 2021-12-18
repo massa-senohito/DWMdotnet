@@ -102,9 +102,13 @@ namespace TileManTest
         {
             Logger.Info( $"add {c.Title}" );
             ClientList.Add( c );
-            Icon item = Win32dll.GetAppIcon( c.Hwnd );
-            IconList.Add( item );
-            Logger.Warn( $"all Client {ClientTitles.ToJson( ) }" );
+            Task.Run( ( ) =>
+            {
+                Icon item = Win32dll.GetAppIcon( c.Hwnd );
+                IconList.Add( item );
+
+                //Logger.Warn( $"all Client {ClientTitles.ToJson( ) }" );
+            } );
         }
 
         // 隠しているとアイコンを自動開放するらしい タイル化ごとに再取得
@@ -170,6 +174,7 @@ namespace TileManTest
             }
             if ( temp != null )
             {
+                // foreachで要素を消すと怒られてしまうので
                 RemoveClient( temp );
             }
 
@@ -198,6 +203,7 @@ namespace TileManTest
 
         public IEnumerable<string> ClientTitles
         {
+            // 非同期にしたことでコレクションが後から増えたり減ったりする、ログなら一旦コメントアウトしておけばいいのだが
             get
             {
                 foreach ( var item in ClientList )

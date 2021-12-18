@@ -19,6 +19,19 @@ type TileMode =
   |Float
   |NoHandle
 
+let asyncSetWindow hwnd x y w h =
+  #if RECOVER
+  async{
+    ThreadWindowHandles.SetWindowPos( hwnd , nativeint(0) ,
+              x , y , w , h , SWP.NOACTIVATE ) |> ignore
+    
+  } |> Async.Start
+  #else
+
+    ThreadWindowHandles.SetWindowPos( hwnd , nativeint(0) ,
+              x , y , w , h , SWP.NOACTIVATE ) |> ignore
+  #endif
+
 let getWinText hwnd =
   let len = User32Methods.GetWindowTextLength(hwnd)
   let builder = new StringBuilder(len + 1)
@@ -71,7 +84,8 @@ type Client =
     ( t.Rect.Top + t.Rect.Height ) / 2
 
   member private t.UpdateByRect() =
-    User32Methods.SetWindowPos(t.Hwnd , nativeint(0) , t.Rect.X , t.Rect.Y , t.Rect.Width , t.Rect.Height , WindowPositionFlags.SWP_NOACTIVATE)
+    asyncSetWindow t.Hwnd t.Rect.X t.Rect.Y t.Rect.Width t.Rect.Height 
+    //User32Methods.SetWindowPos(t.Hwnd , nativeint(0) , t.Rect.X , t.Rect.Y , t.Rect.Width , t.Rect.Height , WindowPositionFlags.SWP_NOACTIVATE)
   
   member t.SetYH y h =
     t.Rect <- new System.Drawing.Rectangle(t.Rect.X , y , t.Rect.Width , h)

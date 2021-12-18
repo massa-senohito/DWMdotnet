@@ -1,7 +1,7 @@
 ﻿//#define USESCREENWORLD
-//#define RECOVER
 //#define MultiScreen
 //#define SCREENCHANGE
+//#define RECOVER
 using DWMDotnet;
 using Handles;
 using MouseCaptureTest;
@@ -42,8 +42,16 @@ namespace TileManTest
 
         public Form1( )
         {
-            KeyDown += ( s , e ) => MessageBox.Show( e.KeyData.ToString() );
             Logger = new DebugLogger( "Form1" );
+            //foreach(var proc in Process.GetProcesses())
+            //{
+            //    var pname = proc.ProcessName;
+            //    if(pname.Contains("Browser"))
+            //    {
+            //        Trace.WriteLine( pname );
+            //        proc.Kill( );
+            //    }
+            //}
             _TileSetting = TileSetting.Load( SettingPath );
 
             WindowManager = new TileWindowManager( UIHeight );
@@ -384,8 +392,10 @@ namespace TileManTest
             }
 
             uint procID = 0;
-            label2.Text = wnd.ToString( );
-            label1.Text = DateTime.Now.ToString( "HH:mm" );
+            var now = DateTime.Now;
+            //label2.Text = wnd.ToString( );
+            label2.Text = now.ToString(" yyyy/MM/dd (ddd)" );
+            label1.Text = now.ToString( "HH:mm" );
             //label1.Text = SelectedClientList( ).Aggregate( "" , ( acc , c ) => acc + "\n" + c.Title );
 #if USEWINAPI
             //IntPtr procPtr = IntPtr.Zero;
@@ -783,14 +793,23 @@ namespace TileManTest
 
         private void QuitWindowManager( )
         {
+            List<string> TitleAndClass = new List<string>();
             foreach ( var screen in WindowManager.ScreenList )
             {
-
                 foreach ( var tagMan in screen.TagList )
                 {
+                    foreach ( var client in tagMan.ClientList )
+                    {
+
+                        var hwnd = client.Hwnd;
+                        var title = ThreadWindowHandles.GetWindowText( hwnd );
+                        var klass = ThreadWindowHandles.GetClassText( hwnd );
+                        TitleAndClass.Add( "title : " + title + " class : " + klass );
+                    }
                     //tagMan.DumpIcon( );
                 }
             }
+            System.IO.File.WriteAllLines( "dumpedTitleAndClass.txt" , TitleAndClass.ToArray( ) );
             CleanUp( );
             Close( );
         }

@@ -45,8 +45,15 @@ namespace DWMDotnet
 
     let setVisibility hwnd visiblity =
       let visibleFlag = if visiblity then SWP.SHOWWINDOW else SWP.HIDEWINDOW
+      #if RECOVER
+      let asp =
+        async{
+          Native.SetWindowPos(hwnd , nativeint 0 , 0 , 0 , 0 , 0 , visibleFlag ||| SWP.NOACTIVATE ||| SWP.NOMOVE ||| SWP.NOSIZE ||| SWP.NOZORDER) |> ignore
+        }
+      asp |> Async.Start
+      #else
       Native.SetWindowPos(hwnd , nativeint 0 , 0 , 0 , 0 , 0 , visibleFlag ||| SWP.NOACTIVATE ||| SWP.NOMOVE ||| SWP.NOSIZE ||| SWP.NOZORDER) |> ignore
-      
+      #endif
 
     let setClientVisibility (client : Client ) visiblity =
       client.IsActive <- visiblity
@@ -163,5 +170,6 @@ namespace DWMDotnet
         let crect = c.Rect
         if crect.X <> copyX || crect.Y <> copyY || crect.Width <> copyW || crect.Height <> copyH then
           c.Rect <- new Rectangle(copyX , copyY , copyW , copyH )
-          ThreadWindowHandles.SetWindowPos( c.Hwnd , nativeint(0) ,
-            copyX , copyY , copyW , copyH , SWP.NOACTIVATE ) |> ignore
+          //ThreadWindowHandles.SetWindowPos( c.Hwnd , nativeint(0) ,
+          //  copyX , copyY , copyW , copyH , SWP.NOACTIVATE ) |> ignore
+          Types.asyncSetWindow (c.Hwnd) copyX copyY copyW copyH
